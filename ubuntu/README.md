@@ -1,10 +1,10 @@
-# exec-server (MCP)
+# OpenClaw Server Setup
 
-An MCP server that exposes a single tool — `exec_command` — for executing shell commands inside a Docker container. Uses the [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) transport.
+Provision an Ubuntu/Debian machine as an OpenClaw-ready development server. The setup script installs all required tooling and creates the `clawdius` service user.
 
-## Dev Installation (Bare Metal)
+Full documentation: [docs.openclaw.ai](https://docs.openclaw.ai/start/getting-started)
 
-Provision a fresh Ubuntu/Debian machine with all dependencies and the `clawdius` user:
+## Install
 
 ```bash
 # curl
@@ -16,113 +16,54 @@ wget -qO setup.sh https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/head
 sudo bash setup.sh
 ```
 
-The script installs Node.js 22.x, GitHub CLI, agent-browser + Chromium, and creates a `clawdius` user with sudo access. You will be prompted for a password (default: `clawdius`).
+The interactive installer will prompt for:
 
-For non-interactive use (e.g. CI):
+| Prompt | Default | Description |
+|--------|---------|-------------|
+| Password | `clawdius` | Login password for the `clawdius` user |
+| SSH public key | *(skip)* | Added to `~clawdius/.ssh/authorized_keys` |
+| Git user.name / user.email | *(skip)* | Global git identity for `clawdius` |
+| GitHub token | *(skip)* | Authenticates `gh` CLI for `clawdius` |
+| OpenClaw CLI | Yes | Installs the [OpenClaw CLI](https://docs.openclaw.ai/start/getting-started) |
+| agent-browser | Yes | Installs agent-browser + Chromium |
+
+After the script finishes, complete OpenClaw onboarding:
+
+```bash
+su - clawdius
+openclaw onboard --install-daemon
+```
+
+### Non-interactive (CI / automation)
+
+Installs everything with defaults (`clawdius:clawdius`, all optional tools enabled):
 
 ```bash
 sudo bash setup.sh --non-interactive
 ```
 
-## Quick Start (Docker)
+## What gets installed
+
+| Tool | Version |
+|------|---------|
+| Node.js | 22.x |
+| Bun | latest |
+| uv | latest |
+| GitHub CLI | latest |
+| OpenClaw CLI | latest |
+| agent-browser + Chromium | latest (optional) |
+
+## Post-install
 
 ```bash
-cd orchestra
-docker compose up exec_server --build -d
+# Switch to clawdius
+su - clawdius
+
+# Verify tooling
+node --version && bun --version && uv --version && gh --version
+
+# Complete OpenClaw setup
+openclaw onboard --install-daemon
+openclaw gateway status
+openclaw dashboard
 ```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `API_KEY` | No | If set, all `/mcp` requests must include `x-api-key` header |
-| `PORT` | No | Server port (default: `3005`) |
-
-## Test Commands
-
-### 1. Initialize a session
-
-```bash
-curl -s -X POST http://localhost:3005/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2025-03-26",
-      "capabilities": {},
-      "clientInfo": { "name": "test", "version": "1.0.0" }
-    },
-    "id": 1
-  }'
-```
-
-Note the `mcp-session-id` response header — include it in subsequent requests.
-
-### 2. Send initialized notification
-
-```bash
-curl -s -X POST http://localhost:3005/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "mcp-session-id: <SESSION_ID>" \
-  -d '{"jsonrpc": "2.0", "method": "notifications/initialized"}'
-```
-
-### 3. List tools
-
-```bash
-curl -s -X POST http://localhost:3005/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "mcp-session-id: <SESSION_ID>" \
-  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 2}'
-```
-
-### 4. Call exec_command
-
-```bash
-curl -s -X POST http://localhost:3005/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "method": "tools/call",
-    "params": {
-      "name": "exec_command",
-      "arguments": { "cmd": "echo hello world" }
-    },
-    "id": 3
-  }'
-```
-
-### 5. Health check
-
-```bash
-curl http://localhost:3005/health
-```
-
-### With API key auth
-
-If the container has `API_KEY` set, add the header to all requests:
-
-```bash
-curl -s -X POST http://localhost:3005/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -d '{ ... }'
-```
-
-## Orchestra Integration
-
-Add as an MCP server in the orchestra UI:
-
-| Field | Value |
-|-------|-------|
-| URL | `http://exec_server:3005/mcp` (docker network) or `http://localhost:3005/mcp` (host) |
-| Transport | `streamable_http` |
-| Headers | `{"x-api-key": "<API_KEY>"}` if auth is enabled, otherwise `{}` |
-
-The `exec_command` tool will appear when fetching tools from the configured server.

@@ -1,39 +1,30 @@
-# Sandboxes
+# OpenClaw Sandboxes
 
-A collection of containerized MCP (Model Context Protocol) sandbox servers for secure, remote tool execution. Each sandbox runs inside a Docker container and exposes tools over the [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) transport.
-
-## Available Sandboxes
-
-| Sandbox | Description | Default Port |
-|---------|-------------|--------------|
-| [ubuntu](./ubuntu/) | Debian-based shell execution sandbox exposing `exec_command` | 3005 |
-
-## Architecture
-
-Each sandbox is a standalone MCP server that:
-
-- Runs inside an isolated Docker container
-- Exposes tools via the MCP Streamable HTTP transport at `/mcp`
-- Supports optional API key authentication (`x-api-key` header)
-- Maintains session state across requests using `mcp-session-id`
-- Provides a `/health` endpoint for monitoring
+Server provisioning and sandbox images for [OpenClaw](https://docs.openclaw.ai). Each sandbox provides an isolated, pre-configured environment for OpenClaw agents to execute tasks.
 
 ## Quick Start
 
+Provision a fresh Ubuntu/Debian server:
+
 ```bash
-# Build and run a sandbox
-cd ubuntu
-docker build -t exec-server .
-docker run -p 3005:3005 exec-server
+curl -fsSL https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/openclaw/ubuntu/setup.sh -o setup.sh
+sudo bash setup.sh
 ```
 
-## Integration
+See [ubuntu/README.md](./ubuntu/) for full details, configuration options, and non-interactive usage.
 
-These sandboxes are designed to be used with [Orchestra](https://github.com/ruska-ai) or any MCP-compatible client. Add a sandbox as an MCP server by pointing to its `/mcp` endpoint with the `streamable_http` transport.
+## Available Sandboxes
 
-## Adding a New Sandbox
+| Sandbox | Description |
+|---------|-------------|
+| [ubuntu](./ubuntu/) | Debian-based OpenClaw server with Node.js, Bun, uv, GitHub CLI, and agent-browser |
 
-1. Create a new directory under this repo (e.g., `python/`, `alpine/`)
-2. Include a `Dockerfile`, entrypoint, and MCP server implementation
-3. Follow the existing pattern: expose `/mcp` and `/health` endpoints
-4. Add a `README.md` documenting the sandbox's tools and configuration
+## Architecture
+
+Each sandbox provisions a `clawdius` user with:
+
+- **Runtime tooling** -- Node.js 22.x, Bun, uv (Python), GitHub CLI
+- **OpenClaw CLI** -- gateway, dashboard, and agent orchestration
+- **Browser automation** -- agent-browser + Chromium (optional)
+- **SSH access** -- configurable authorized keys
+- **Git identity** -- pre-configured global git config
