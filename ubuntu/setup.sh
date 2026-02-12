@@ -54,7 +54,8 @@ apt-get install -y --no-install-recommends \
   jq \
   sudo \
   gnupg \
-  lsb-release
+  lsb-release \
+  unzip
 ok "Base packages installed"
 
 # ─── 2. Node.js 22.x ────────────────────────────────────────────────
