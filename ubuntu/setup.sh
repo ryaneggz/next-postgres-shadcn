@@ -169,7 +169,8 @@ fi
 # ─── 10. OpenClaw (optional) ──────────────────────────────────────────
 if [[ "$INSTALL_OPENCLAW" == true ]]; then
   banner "Installing OpenClaw CLI"
-  su - clawdius -c "curl -fsSL https://openclaw.ai/install.sh | OPENCLAW_NO_TTY=1 bash"
+  # Install openclaw directly via npm to avoid the installer pulling in nvm
+  su - clawdius -c "export PATH=/home/clawdius/.npm-global/bin:\$PATH && npm install -g openclaw"
   ok "OpenClaw CLI installed"
   printf "  Run 'openclaw onboard --install-daemon' as clawdius to complete setup.\n"
 else
