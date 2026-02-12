@@ -6,10 +6,5 @@ services:
       - "3005:3005"
     env_file:
       - ./ubuntu/.env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3005/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+    stdin_open: true
+    tty: true
