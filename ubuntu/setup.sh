@@ -21,6 +21,10 @@ done
 # ─── Collect all options upfront ─────────────────────────────────────
 CLAWDIUS_PW="clawdius"
 INSTALL_BROWSER=true
+SSH_PUBKEY=""
+GH_TOKEN=""
+GIT_USER_NAME=""
+GIT_USER_EMAIL=""
 
 if [[ "$NON_INTERACTIVE" == false ]]; then
   banner "Configuration"
@@ -38,7 +42,20 @@ if [[ "$NON_INTERACTIVE" == false ]]; then
     printf "${RED}  Passwords do not match. Try again.${NC}\n"
   done
 
-  # 2) agent-browser
+  # 2) SSH public key
+  printf "\n  SSH public key for clawdius authorized_keys (blank to skip)\n"
+  read -rp "  Paste public key: " SSH_PUBKEY
+
+  # 3) Git identity
+  printf "\n  Git global config for clawdius (blank to skip)\n"
+  read -rp "  user.name: " GIT_USER_NAME
+  read -rp "  user.email: " GIT_USER_EMAIL
+
+  # 4) GitHub CLI token
+  printf "\n  GitHub personal access token for 'gh auth' (blank to skip)\n"
+  read -rsp "  Token: " GH_TOKEN; echo
+
+  # 5) agent-browser
   read -rp "  Install agent-browser + Chromium? [Y/n]: " answer
   [[ "$answer" =~ ^[Nn]$ ]] && INSTALL_BROWSER=false
 
@@ -51,6 +68,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
+  git \
   jq \
   sudo \
   gnupg \
@@ -109,7 +127,37 @@ echo "clawdius:${CLAWDIUS_PW}" | chpasswd
 usermod -aG sudo clawdius
 ok "User 'clawdius' configured (sudo)"
 
-# ─── 8. Cleanup ──────────────────────────────────────────────────────
+# ─── 8. Git global config (optional) ─────────────────────────────────
+if [[ -n "$GIT_USER_NAME" ]]; then
+  su - clawdius -c "git config --global user.name '${GIT_USER_NAME}'"
+fi
+if [[ -n "$GIT_USER_EMAIL" ]]; then
+  su - clawdius -c "git config --global user.email '${GIT_USER_EMAIL}'"
+fi
+if [[ -n "$GIT_USER_NAME" || -n "$GIT_USER_EMAIL" ]]; then
+  ok "Git config set for clawdius"
+fi
+
+# ─── 9. SSH authorized key (optional) ────────────────────────────────
+if [[ -n "$SSH_PUBKEY" ]]; then
+  banner "Configuring SSH authorized key for clawdius"
+  SSHDIR="/home/clawdius/.ssh"
+  mkdir -p "$SSHDIR"
+  echo "$SSH_PUBKEY" >> "$SSHDIR/authorized_keys"
+  chmod 700 "$SSHDIR"
+  chmod 600 "$SSHDIR/authorized_keys"
+  chown -R clawdius:clawdius "$SSHDIR"
+  ok "SSH public key added"
+fi
+
+# ─── 10. GitHub CLI auth (optional) ──────────────────────────────────
+if [[ -n "$GH_TOKEN" ]]; then
+  banner "Authenticating GitHub CLI for clawdius"
+  echo "$GH_TOKEN" | su - clawdius -c "gh auth login --with-token"
+  ok "gh auth configured"
+fi
+
+# ─── 11. Cleanup ─────────────────────────────────────────────────────
 banner "Cleaning up APT cache"
 rm -rf /var/lib/apt/lists/*
 ok "Done"
