@@ -3,6 +3,6 @@ services:
     build:
       context: .
     volumes:
-      - ./sandbox:/home/sandbox
+      - ./workspace:/home/sandbox/workspace
     stdin_open: true
     tty: true
