@@ -22,7 +22,18 @@ ifeq ($(DOCKER),true)
 endif
 COMPOSE = NAME=$(NAME) docker compose $(COMPOSE_FILES) -p $(NAME)
 
-.PHONY: build rebuild run shell stop push all clean list heartbeat heartbeat-stop heartbeat-status
+.PHONY: build rebuild run shell stop push all clean list heartbeat heartbeat-stop heartbeat-status quickstart
+
+quickstart:
+	docker build -t $(IMAGE) .
+	$(COMPOSE) up -d
+	docker exec --user root $(NAME) bash -c '/home/sandbox/install/setup.sh --non-interactive'
+	@echo ""
+	@echo "  ✅ Sandbox '$(NAME)' is ready!"
+	@echo ""
+	@echo "  Run:  make NAME=$(NAME) shell"
+	@echo "  Then: claude"
+	@echo ""
 
 build:
 	docker build -t $(IMAGE) .

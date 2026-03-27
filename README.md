@@ -4,6 +4,19 @@ Isolated, pre-configured sandbox images for AI coding agents — [Claude Code](h
 
 > **Spin up isolated, fully-provisioned Docker sandboxes where AI coding agents can operate with full permissions, persistent memory, and autonomous background tasks — without touching your host system.**
 
+## ⚡ Quickstart
+
+```bash
+git clone https://github.com/ruska-ai/sandboxes.git && cd sandboxes
+make NAME=dev quickstart        # builds, provisions, done
+make NAME=dev shell             # drop into the sandbox
+claude                          # start coding with AI
+```
+
+That's it. Three commands — clone, build, go.
+
+> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Make](https://www.gnu.org/software/make/). That's all you need on your host.
+
 ---
 
 ## 🎯 Why Open Harness?
@@ -49,23 +62,9 @@ Named sandboxes (`NAME=research`, `NAME=frontend`) run simultaneously, each with
 
 ---
 
-## 📥 Install (standalone)
+## 🚀 More Ways to Run
 
-Run the setup script directly on any Ubuntu/Debian machine:
-
-```bash
-# curl
-curl -fsSL https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/open-harness/install/setup.sh -o setup.sh
-
-# wget
-wget -qO setup.sh https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/open-harness/install/setup.sh
-
-sudo bash setup.sh --non-interactive
-```
-
----
-
-## 🚀 Docker Quick Start
+**Step-by-step** (if you want control over each stage):
 
 ```bash
 make NAME=my-sandbox build                      # build the image
@@ -75,17 +74,24 @@ sudo bash ~/install/setup.sh                    # provision tools (interactive)
 cd ~/workspace && claude                        # launch an agent
 ```
 
-Enable Docker-in-Docker (mounts host Docker socket):
+**Standalone** (no Docker, direct on any Ubuntu/Debian machine):
 
 ```bash
-make NAME=my-sandbox DOCKER=true run            # sandbox with Docker access
+curl -fsSL https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/open-harness/install/setup.sh -o setup.sh
+sudo bash setup.sh --non-interactive
 ```
 
-Run multiple named sandboxes side by side:
+**Docker-in-Docker** (agents can build and manage containers):
 
 ```bash
-make NAME=research build run
-make NAME=frontend DOCKER=true build run        # this one gets Docker
+make NAME=my-sandbox DOCKER=true quickstart     # sandbox with Docker access
+```
+
+**Multiple sandboxes** (parallel workstreams):
+
+```bash
+make NAME=research quickstart
+make NAME=frontend DOCKER=true quickstart       # this one gets Docker
 make list                                       # see all running sandboxes
 ```
 
@@ -145,6 +151,7 @@ make list                                       # see all running sandboxes
 
 | Target | Description |
 |--------|-------------|
+| `make quickstart` | Build, provision, and prepare sandbox (one command) |
 | `make build` | Build the Docker image |
 | `make rebuild` | Full no-cache rebuild + restart |
 | `make run` | Start the container (detached) |
