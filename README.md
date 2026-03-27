@@ -1,6 +1,6 @@
-# Claude Code Sandboxes
+# Open Harness
 
-Isolated, pre-configured sandbox images for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) agents.
+Isolated, pre-configured sandbox images for AI coding agents — [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [OpenAI Codex](https://github.com/openai/codex), [Pi Agent](https://shittycodingagent.ai), and more.
 
 ## Install (standalone)
 
@@ -8,10 +8,10 @@ Run the setup script directly on any Ubuntu/Debian machine:
 
 ```bash
 # curl
-curl -fsSL https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/claude-code/install/setup.sh -o setup.sh
+curl -fsSL https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/open-harness/install/setup.sh -o setup.sh
 
 # wget
-wget -qO setup.sh https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/claude-code/install/setup.sh
+wget -qO setup.sh https://raw.githubusercontent.com/ruska-ai/sandboxes/refs/heads/open-harness/install/setup.sh
 
 sudo bash setup.sh --non-interactive
 ```
@@ -22,8 +22,17 @@ sudo bash setup.sh --non-interactive
 make build                                      # build the image
 make run                                        # start the container
 make shell                                      # open a shell as sandbox user
-sudo bash ~/install/setup.sh --non-interactive  # provision tools
-cd ~/workspace && claude                        # launch Claude Code
+sudo bash ~/install/setup.sh                    # provision tools (interactive)
+cd ~/workspace && claude                        # launch an agent
+```
+
+Run multiple named sandboxes side by side:
+
+```bash
+make NAME=research build run                    # named sandbox
+make NAME=research shell
+make NAME=frontend build run                    # another in parallel
+make list                                       # see all running sandboxes
 ```
 
 `make rebuild` does a full no-cache build and restart.
@@ -32,12 +41,15 @@ cd ~/workspace && claude                        # launch Claude Code
 
 ```
 ├── Dockerfile               # base image: Debian Bookworm slim + sandbox user
-├── docker-compose.yml       # mounts workspace/ as shared volume
-├── Makefile                 # build, run, shell, stop, rebuild, clean, push
+├── docker-compose.yml       # mounts workspace/, Docker socket, host networking
+├── Makefile                 # build, run, shell, stop, rebuild, clean, push, list
 ├── install/
 │   └── setup.sh             # provisioning script (runs as root)
 └── workspace/
-    └── CLAUDE.md            # default instructions for Claude Code agent
+    ├── AGENTS.md            # default instructions for all coding agents
+    ├── CLAUDE.md            # symlink → AGENTS.md
+    ├── .claude/             # Claude Code config directory
+    └── .codex/              # Codex config directory
 ```
 
 ## How It Works
@@ -45,20 +57,22 @@ cd ~/workspace && claude                        # launch Claude Code
 1. **`Dockerfile`** creates a minimal Debian image with a `sandbox` user (passwordless sudo) and bakes in:
    - `install/` copied to `/home/sandbox/install/`
    - `workspace/` copied to `/home/sandbox/workspace/`
-   - Claude `--dangerously-skip-permissions` alias in `.bashrc`
+   - Agent aliases in `.bashrc` (`claude`, `codex`, `pi`)
+   - Docker group membership for the sandbox user
    - Default shell drops into `/home/sandbox/workspace`
 
-2. **`docker-compose.yml`** bind-mounts `./workspace` to `/home/sandbox/workspace` so files persist across container restarts.
+2. **`docker-compose.yml`** bind-mounts `./workspace`, the Docker socket, and configures `host.docker.internal` so the sandbox can reach host containers while remaining isolated.
 
 3. **`install/setup.sh`** provisions all tools system-wide (as root):
-   - Node.js 22.x, npm (via NodeSource apt repo)
-   - GitHub CLI (via official apt repo)
-   - Bun (installed to `/usr/local/bin`)
-   - uv (installed to `/usr/local/bin`)
-   - Claude Code CLI (via `npm install -g`)
-   - Optional: agent-browser + Chromium
+   - Node.js 22.x, npm, tmux, nano, ripgrep, jq (always)
+   - Docker CLI + Compose plugin (always)
+   - GitHub CLI (always)
+   - Bun, uv (always)
+   - Claude Code CLI (default yes)
+   - OpenAI Codex, Pi Agent, AgentMail CLI (opt-in)
+   - agent-browser + Chromium (default yes)
 
-4. **`workspace/CLAUDE.md`** provides default context to the Claude Code agent about its environment and available tools.
+4. **`workspace/AGENTS.md`** provides default context to all coding agents. `CLAUDE.md` is a symlink to it — editing either updates both.
 
 ## Makefile Targets
 
@@ -71,7 +85,10 @@ cd ~/workspace && claude                        # launch Claude Code
 | `make stop` | Stop the container |
 | `make clean` | Stop and remove the local image |
 | `make push` | Push image to ghcr.io/ruska-ai |
+| `make list` | List all running sandboxes |
 | `make all` | Build + push |
+
+All targets accept `NAME=<name>` to manage multiple sandboxes (default: `open-harness`).
 
 ## Configuration
 
@@ -85,38 +102,35 @@ sudo bash ~/install/setup.sh
 sudo bash ~/install/setup.sh --non-interactive
 ```
 
-Interactive mode prompts for: SSH public key, Git identity, GitHub token, Claude Code install, agent-browser install.
+Interactive mode prompts for: SSH public key, Git identity, GitHub token, Claude Code, Codex, Pi Agent, AgentMail (with API key), agent-browser.
 
 ## Usage Examples
 
-Once inside the sandbox (`make shell`), Claude Code can be used for a variety of tasks:
+Once inside the sandbox (`make shell`), use any installed coding agent:
 
 ```bash
-# Log system time to a file every 2 minutes
-/loop 2m append the current system time to output.txt
-
-# Monitor disk usage every 5 minutes
-/loop 5m check disk usage and append a summary to disk-log.txt
-
-# Scaffold a new Python project
+# Claude Code
 claude -p "Create a Python CLI app with click that fetches weather data"
 
-# Generate and run a script
-claude -p "Write a bash script that finds all files larger than 10MB and list them"
+# OpenAI Codex
+codex "Write a bash script that finds all files larger than 10MB"
 
-# Refactor existing code
-claude -p "Read main.py and refactor it to use async/await"
+# Pi Agent
+pi -p "Refactor main.py to use async/await"
+
+# Claude Code loop tasks
+/loop 2m append the current system time to output.txt
 ```
 
 ## Releases
 
-Tag format: `claude-v<version>` (e.g. `claude-v1.0.0`)
+Tag format: `oh-v<version>` (e.g. `oh-v1.0.0`)
 
 ```bash
-git tag claude-v1.0.0
-git push origin claude-v1.0.0
+git tag oh-v1.0.0
+git push origin oh-v1.0.0
 ```
 
 This triggers the CI workflow which builds and pushes:
-- `ghcr.io/ruska-ai/sandbox:claude-v1.0.0`
-- `ghcr.io/ruska-ai/sandbox:claude-latest`
+- `ghcr.io/ruska-ai/open-harness:v1.0.0`
+- `ghcr.io/ruska-ai/open-harness:latest`

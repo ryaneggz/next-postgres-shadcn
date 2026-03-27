@@ -1,4 +1,4 @@
-NAME ?= sandbox
+NAME ?= open-harness
 TAG  ?= latest
 REGISTRY = ghcr.io/ruska-ai
 IMAGE = $(REGISTRY)/$(NAME):$(TAG)

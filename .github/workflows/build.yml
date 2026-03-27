@@ -1,4 +1,4 @@
-name: Build Sandbox
+name: Build Open Harness
 
 permissions:
     contents: read
@@ -7,7 +7,7 @@ permissions:
 on:
     push:
         tags:
-            - "claude-v*"
+            - "oh-v*"
 
 jobs:
     build:
@@ -23,9 +23,9 @@ jobs:
             - name: Parse tag
               id: parse
               run: |
-                  # Expected tag format: claude-v<version>
-                  # e.g. claude-v1.0.0
-                  VERSION=${GITHUB_REF#refs/tags/claude-}
+                  # Expected tag format: oh-v<version>
+                  # e.g. oh-v1.0.0
+                  VERSION=${GITHUB_REF#refs/tags/oh-}
                   echo "version=$VERSION" >> "$GITHUB_OUTPUT"
                   echo "Version: $VERSION"
 
@@ -41,8 +41,8 @@ jobs:
 
             - name: Build and push
               run: |
-                  IMAGE=ghcr.io/ruska-ai/sandbox:claude-${{ steps.parse.outputs.version }}
-                  LATEST=ghcr.io/ruska-ai/sandbox:claude-latest
+                  IMAGE=ghcr.io/ruska-ai/open-harness:${{ steps.parse.outputs.version }}
+                  LATEST=ghcr.io/ruska-ai/open-harness:latest
 
                   echo "Building: $IMAGE and $LATEST"
                   docker build -t $IMAGE -t $LATEST .
