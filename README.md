@@ -50,10 +50,15 @@ make list                                       # see all running sandboxes
 ├── docker-compose.docker.yml # Docker override: mounts socket + host networking
 ├── Makefile                 # build, run, shell, stop, rebuild, clean, push, list
 ├── install/
-│   └── setup.sh             # provisioning script (runs as root)
+│   ├── setup.sh             # provisioning script (runs as root)
+│   └── heartbeat.sh         # periodic heartbeat runner (start/stop/status)
 └── workspace/
     ├── AGENTS.md            # default instructions for all coding agents
     ├── CLAUDE.md            # symlink → AGENTS.md
+    ├── HEARTBEAT.md         # periodic task checklist (agent reads each cycle)
+    ├── SOUL.md              # agent persona, tone, and boundaries
+    ├── MEMORY.md            # curated long-term memory
+    ├── memory/              # daily append-only logs (YYYY-MM-DD.md)
     ├── .claude/             # Claude Code config directory
     └── .codex/              # Codex config directory
 ```
@@ -93,6 +98,9 @@ make list                                       # see all running sandboxes
 | `make push` | Push image to ghcr.io/ruska-ai |
 | `make list` | List all running sandboxes |
 | `make all` | Build + push |
+| `make heartbeat` | Start the heartbeat loop (background) |
+| `make heartbeat-stop` | Stop the heartbeat loop |
+| `make heartbeat-status` | Show heartbeat status and recent logs |
 
 `NAME` is required for all targets. Pass `DOCKER=true` to enable Docker socket access.
 
@@ -109,6 +117,37 @@ sudo bash ~/install/setup.sh --non-interactive
 ```
 
 Interactive mode prompts for: SSH public key, Git identity, GitHub token, Claude Code, Codex, Pi Agent, AgentMail (with API key), agent-browser.
+
+## Heartbeat, Soul & Memory
+
+Three workspace files give agents persistent identity and periodic task execution:
+
+| File | Purpose | Authored by |
+|------|---------|-------------|
+| `SOUL.md` | Agent persona, tone, boundaries | User (seeded with template) |
+| `MEMORY.md` | Curated long-term memory | Agent (distilled from daily logs) |
+| `HEARTBEAT.md` | Periodic task checklist | User |
+| `memory/YYYY-MM-DD.md` | Daily append-only logs | Agent |
+
+**Start the heartbeat loop:**
+
+```bash
+make NAME=my-sandbox heartbeat                              # default: 30 min interval
+make NAME=my-sandbox HEARTBEAT_INTERVAL=600 run             # 10 min interval (set at container start)
+make NAME=my-sandbox heartbeat-status                       # check status + recent logs
+make NAME=my-sandbox heartbeat-stop                         # stop the loop
+```
+
+**Configuration** (env vars, set at `make run` or in `docker-compose.yml`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HEARTBEAT_INTERVAL` | `1800` | Seconds between cycles |
+| `HEARTBEAT_ACTIVE_START` | _(unset)_ | Hour to start (0-23) |
+| `HEARTBEAT_ACTIVE_END` | _(unset)_ | Hour to stop (0-23) |
+| `HEARTBEAT_AGENT` | `claude` | Agent CLI to invoke |
+
+If `HEARTBEAT.md` contains only headers or comments, the cycle is skipped (saves API costs). If the agent has nothing to report, it replies `HEARTBEAT_OK` and the response is suppressed.
 
 ## Usage Examples
 

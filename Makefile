@@ -2,6 +2,11 @@ DOCKER  ?= false
 TAG     ?= latest
 REGISTRY = ghcr.io/ruska-ai
 
+HEARTBEAT_INTERVAL     ?= 1800
+HEARTBEAT_ACTIVE_START ?=
+HEARTBEAT_ACTIVE_END   ?=
+HEARTBEAT_AGENT        ?= claude
+
 # NAME is required — fail fast with a helpful message
 ifndef NAME
   $(error NAME is required. Usage: make NAME=my-sandbox <target>)
@@ -17,7 +22,7 @@ ifeq ($(DOCKER),true)
 endif
 COMPOSE = NAME=$(NAME) docker compose $(COMPOSE_FILES) -p $(NAME)
 
-.PHONY: build rebuild run shell stop push all clean list
+.PHONY: build rebuild run shell stop push all clean list heartbeat heartbeat-stop heartbeat-status
 
 build:
 	docker build -t $(IMAGE) .
@@ -49,3 +54,16 @@ clean:
 
 list:
 	@docker ps --filter "label=com.docker.compose.service=sandbox" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+
+heartbeat:
+	@docker exec -d --user sandbox $(NAME) bash -c '/home/sandbox/install/heartbeat.sh start' 2>/dev/null \
+		|| (echo "Error: container '$(NAME)' is not running. Start it with: make NAME=$(NAME) run" >&2; exit 1)
+	@echo "Heartbeat started in $(NAME)"
+
+heartbeat-stop:
+	@docker exec --user sandbox $(NAME) bash -c '/home/sandbox/install/heartbeat.sh stop' 2>/dev/null \
+		|| (echo "Error: container '$(NAME)' is not running or heartbeat not active." >&2; exit 1)
+
+heartbeat-status:
+	@docker exec --user sandbox $(NAME) bash -c '/home/sandbox/install/heartbeat.sh status' 2>/dev/null \
+		|| (echo "Error: container '$(NAME)' is not running." >&2; exit 1)
