@@ -29,9 +29,19 @@ Here's what you get out of the box:
 🐳 Docker-in-Docker — agents can build and manage containers from inside the sandbox
 🔄 Multi-sandbox — spin up parallel named sandboxes for different workstreams
 
-Agent-agnostic. Same sandbox runs Claude, Codex, and Pi side by side. Same AGENTS.md instructs all of them.
+What makes this different from just running agents locally:
 
-Star the repo if this is useful to you: https://github.com/ryaneggz/open-harness
+Most setups treat the agent as a tool you invoke. Open Harness treats it as a resident. The sandbox isn't just isolation — it's an environment designed for agents to live in.
+
+SOUL.md defines who the agent is. MEMORY.md is its long-term memory that persists across sessions. Daily logs accumulate in memory/YYYY-MM-DD.md and get distilled back into MEMORY.md over time. The agent doesn't start from zero every session — it picks up where it left off.
+
+The heartbeat loop runs on a timer in the background. The agent wakes up, reads HEARTBEAT.md, performs whatever tasks you've listed, and goes back to sleep. No human in the loop. It can monitor, maintain, and report autonomously.
+
+And it's agent-agnostic. Claude Code, Codex, and Pi all share the same workspace, the same AGENTS.md instructions, the same memory files. Swap agents without changing your setup. Run them in parallel across named sandboxes.
+
+The architecture is: disposable container + persistent workspace + agent identity + autonomous execution. That combination doesn't exist in any other open-source tool I've seen.
+
+Star the repo if this is useful: https://github.com/ryaneggz/open-harness
 
 #OpenSource #AI #CodingAgents #DevTools #Docker #ClaudeCode #OpenAI #Developer #SoftwareEngineering
 
