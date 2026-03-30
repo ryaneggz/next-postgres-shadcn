@@ -10,7 +10,7 @@ Isolated, pre-configured sandbox images for AI coding agents — [Claude Code](h
 2. Clone, build, go:
 
 ```bash
-git clone https://github.com/<your-username>/open-harness.git && cd open-harness
+git clone https://github.com/ryaneggz/open-harness.git && cd open-harness
 make NAME=dev quickstart        # builds, provisions, done
 make NAME=dev shell             # drop into the sandbox
 claude                          # start coding with AI
