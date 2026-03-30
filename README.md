@@ -20,6 +20,80 @@ claude                          # start coding with AI
 
 ---
 
+## 🤖 Example Agents
+
+Three ready-to-try agents that showcase what sandboxed AI agents can do. Each provisions in one command, covers a different domain, and cleans up with `make clean`.
+
+### 1. Blog Writer
+
+**What it does:** Writes blog posts for your website, creates PRs with the draft, and generates companion LinkedIn & X.com posts for manual promotion.
+
+```bash
+make NAME=blog-writer BASE_BRANCH=main quickstart
+make NAME=blog-writer shell
+claude
+```
+
+Tell Claude:
+
+> Set up this sandbox as a blog writer agent. You write posts for ruska.ai/services, create PRs to github.com/ruska-ai/website:master, and generate a LinkedIn post + X.com post alongside each draft.
+
+**What to explore:**
+- Edit `SOUL.md` to set writing tone and brand voice
+- Seed `MEMORY.md` with target audience and content pillars
+- Add a weekly heartbeat to `heartbeats.conf` for scheduled drafts
+
+### 2. Portfolio Manager
+
+**What it does:** Builds and maintains a mock $100K portfolio based on Ray Dalio's All Weather strategy. Uses yfinance for market data and web search for sentiment analysis. Generates daily position reports as PRs.
+
+```bash
+make NAME=portfolio-mgr BASE_BRANCH=main quickstart
+make NAME=portfolio-mgr shell
+claude
+```
+
+Tell Claude:
+
+> Set up this sandbox as a portfolio manager. Build a mock $100K portfolio using Ray Dalio's All Weather allocation. Use yfinance for price data and web search for market sentiment. Track positions in MEMORY.md and generate daily reports.
+
+**What to explore:**
+- Edit `SOUL.md` with investment philosophy and risk tolerance
+- Seed `MEMORY.md` with initial allocation (30% stocks, 40% long bonds, 15% intermediate bonds, 7.5% gold, 7.5% commodities)
+- Add a daily heartbeat for market checks and rebalancing signals
+
+### 3. Uptime Monitor
+
+**What it does:** Periodically checks a list of URLs for availability, response time, and SSL cert status. Creates GitHub issues when problems are detected. Generates weekly SLA reports with uptime percentages.
+
+```bash
+make NAME=uptime-monitor BASE_BRANCH=main quickstart
+make NAME=uptime-monitor shell
+claude
+```
+
+Tell Claude:
+
+> Set up this sandbox as an uptime monitor. Check these URLs every 30 minutes: https://ruska.ai, https://api.ruska.ai/health. Track response times and uptime in MEMORY.md. Create GitHub issues for any downtime. Generate a weekly SLA report as a PR.
+
+**What to explore:**
+- Edit `SOUL.md` with alerting thresholds and escalation rules
+- Seed `MEMORY.md` with the URL list and SLA targets (e.g., 99.9%)
+- Configure `heartbeats.conf` with a 30-minute check interval
+
+### Managing Your Agents
+
+```bash
+make list                              # see all running sandboxes
+make NAME=blog-writer stop             # pause an agent
+make NAME=portfolio-mgr run            # restart
+make NAME=uptime-monitor clean         # full teardown (container + image + worktree)
+```
+
+> **Shortcut:** Inside any Claude Code session at the project root, run `/provision blog-writer` to automate the full setup interactively.
+
+---
+
 ## 🎯 Why Open Harness?
 
 AI coding agents are powerful — but they run with broad system permissions, execute arbitrary code, and need a full development toolchain. Open Harness solves the tension between giving agents the freedom they need and keeping your host machine safe.
