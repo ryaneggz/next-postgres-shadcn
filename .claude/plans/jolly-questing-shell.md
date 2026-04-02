@@ -1,325 +1,264 @@
-# Plan: Replace Makefile with `openharness` CLI built on Pi SDK (Issue #17)
+# Plan: Split openharness into Core Agent + Sandbox Package
 
 ## Context
 
-The root Makefile manages sandbox lifecycle via `make NAME=x target`. Replacing it with `openharness` — a custom agent CLI built on Pi's SDK (`@mariozechner/pi-coding-agent`). Sandbox management tools (quickstart, build, shell, list, heartbeat, etc.) are registered as **first-class built-in tools**, not extensions. Users get both direct CLI commands and conversational AI orchestration in a single binary.
-
-GitHub Issue: #17
+`openharness` currently bundles all 11 sandbox management tools directly into the CLI. Users who just want the agent (no Docker, no sandboxing) get sandbox code they don't need. Splitting into a core agent and a separate sandbox package lets `openharness` be installed standalone, with sandboxing added via `openharness install @openharness/sandbox`.
 
 ## Architecture
 
 ```
-openharness = Pi Agent SDK + sandbox management tools (built-in)
-
-┌─────────────────────────────────────────────────────────┐
-│  openharness CLI                                        │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Pi SDK (@mariozechner/pi-coding-agent)           │  │
-│  │  Agent loop, TUI, sessions, read/write/edit/bash  │  │
-│  └───────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Sandbox Tools (built-in, first-class)            │  │
-│  │  quickstart, build, shell, stop, clean, list,     │  │
-│  │  push, heartbeat sync/stop/status/migrate         │  │
-│  └───────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Custom Config (SOUL.md, skills, extensions)      │  │
-│  │  Orchestrator persona, provisioning skill         │  │
-│  └───────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+BEFORE:                              AFTER:
+┌──────────────────────┐             ┌──────────────────────┐
+│  openharness CLI     │             │  openharness CLI     │
+│  ├─ Pi SDK           │             │  ├─ Pi SDK           │
+│  ├─ 11 sandbox tools │             │  ├─ banner extension │
+│  ├─ banner extension │             │  └─ (no sandbox)     │
+│  └─ slash commands   │             └──────────────────────┘
+└──────────────────────┘                      +
+                                     ┌──────────────────────┐
+                                     │  @openharness/sandbox │  ← Pi package
+                                     │  ├─ 11 sandbox tools │
+                                     │  ├─ slash commands   │
+                                     │  ├─ lib/ (config,    │
+                                     │  │   docker, exec)   │
+                                     │  └─ CLI subcommands  │
+                                     └──────────────────────┘
 ```
 
-**Usage:**
+**User flow:**
 ```bash
-# Launch openharness (interactive TUI — like pi, but with sandbox tools)
-openharness
+# Install core agent
+npm install -g openharness
+openharness                          # AI agent, no sandbox tools
 
-# Inside openharness:
-> /quickstart my-agent --base-branch main    # slash command (direct, no LLM)
-> /list                                       # slash command
-> /shell my-agent                             # slash command
-> "set up a blog writer with heartbeats"      # conversational (LLM orchestrates tools)
+# Add sandboxing
+openharness install @openharness/sandbox
+openharness list                     # now works
+openharness quickstart my-agent      # now works
 ```
 
-## File Structure
+## File Structure (after split)
 
 ```
-cli/                                # NEW — openharness CLI
-  package.json                      # name: openharness, deps: pi-coding-agent, commander, vitest, etc.
-  tsconfig.json                     # TypeScript config
-  eslint.config.js                  # ESLint flat config with @typescript-eslint
-  .prettierrc                       # Prettier config
-  vitest.config.ts                  # Vitest config
+cli/                                 # openharness core agent
+  package.json                       # name: openharness, NO sandbox deps
   src/
-    index.ts                        # Entry point: parse args, launch Pi session with custom tools
-    tools/
-      quickstart.ts                 # Tool: create worktree + build + run + setup
-      build.ts                      # Tool: docker build
-      rebuild.ts                    # Tool: down + no-cache build + up
-      run.ts                        # Tool: compose up -d
-      shell.ts                      # Tool: docker exec -it (interactive)
-      stop.ts                       # Tool: compose down
-      clean.ts                      # Tool: compose down --rmi + worktree remove
-      push.ts                       # Tool: docker push
-      list.ts                       # Tool: docker ps + git worktree list
-      heartbeat.ts                  # Tool: heartbeat sync|stop|status|migrate
-      index.ts                      # Exports all tools array
-    lib/
-      config.ts                     # SandboxConfig: name → image, worktree, project_root, compose cmd
-      docker.ts                     # Docker/compose command builders
-      exec.ts                       # subprocess runner (spawnSync with stdio inherit)
-    __tests__/
-      config.test.ts                # Unit tests for SandboxConfig resolution
-      docker.test.ts                # Unit tests for command builders
-      tools.test.ts                 # Tests for tool parameter schemas and execution logic
-.husky/
-  pre-commit                        # NEW — runs lint-staged in cli/
-.gitignore                          # EDIT — add node_modules, dist
+    index.ts                         # entry point: subcommand dispatch → package, else Pi main()
+    extension.ts                     # core extension: banner only (no sandbox tools)
+  # tests, config files stay
+
+packages/
+  sandbox/                           # @openharness/sandbox — Pi package
+    package.json                     # name: @openharness/sandbox, keywords: ["pi-package"]
+    tsconfig.json
+    extensions/
+      sandbox.ts                     # Pi extension: registers tools + slash commands
+    src/
+      tools/                         # MOVED from cli/src/tools/
+        list.ts
+        quickstart.ts
+        build.ts
+        rebuild.ts
+        run.ts
+        shell.ts
+        stop.ts
+        clean.ts
+        push.ts
+        heartbeat.ts
+        worktree.ts
+        index.ts
+      lib/                           # MOVED from cli/src/lib/
+        config.ts
+        docker.ts
+        exec.ts
+      __tests__/                     # MOVED from cli/src/__tests__/
+        config.test.ts
+        docker.test.ts
+        tools.test.ts
 ```
 
 ## Key Design Decisions
 
-### Pi SDK integration
+### Sandbox package as a Pi package
 
-`openharness` uses `createAgentSession()` from `@mariozechner/pi-coding-agent` to create a custom agent session with sandbox tools registered alongside Pi's default tools (read, write, edit, bash):
-
-```typescript
-import { createAgentSession, SessionManager, DefaultResourceLoader } from "@mariozechner/pi-coding-agent";
-import { sandboxTools } from "./tools/index.js";
-
-const { session } = await createAgentSession({
-  cwd: process.cwd(),
-  sessionManager: SessionManager.create({ baseDir: "~/.openharness/sessions" }),
-  tools: [...sandboxTools],  // quickstart, build, shell, list, etc.
-  resourceLoader: new DefaultResourceLoader({
-    agentDir: "~/.openharness",
-    extensions: [],   // can still load .pi/extensions/ if desired
-  }),
-});
-```
-
-### Tool registration pattern
-
-Each tool uses Pi's TypeBox-based schema system:
-
-```typescript
-import { Type } from "@sinclair/typebox";
-
-export const quickstartTool = {
-  name: "sandbox_quickstart",
-  label: "Quickstart",
-  description: "Create git worktree, build Docker image, start container, run setup",
-  parameters: Type.Object({
-    name: Type.String({ description: "Sandbox name" }),
-    baseBranch: Type.Optional(Type.String({ default: "main", description: "Base branch for worktree" })),
-    tag: Type.Optional(Type.String({ default: "latest", description: "Image tag" })),
-    docker: Type.Optional(Type.Boolean({ default: false, description: "Enable Docker-in-Docker" })),
-  }),
-  async execute(toolCallId, params, signal, onUpdate, ctx) {
-    const config = new SandboxConfig(params);
-    // 1. Create worktree
-    // 2. docker build
-    // 3. compose up -d
-    // 4. docker exec setup.sh --non-interactive
-    return { type: "text", text: `Sandbox '${params.name}' is ready!` };
+`packages/sandbox/package.json`:
+```json
+{
+  "name": "@openharness/sandbox",
+  "version": "0.1.0",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./extensions"]
   },
-};
-```
-
-### Slash commands (direct, no LLM)
-
-Register `/quickstart`, `/list`, `/shell`, etc. as Pi commands for direct execution without LLM involvement. These are registered via the extension API that `createAgentSession` exposes, or via a custom extension loaded at startup.
-
-### Tool ↔ Makefile mapping
-
-| Makefile target | Pi Tool | Slash Command |
-|---|---|---|
-| `make NAME=x quickstart` | `sandbox_quickstart` | `/quickstart x` |
-| `make NAME=x build` | `sandbox_build` | `/build x` |
-| `make NAME=x rebuild` | `sandbox_rebuild` | `/rebuild x` |
-| `make NAME=x run` | `sandbox_run` | `/run x` |
-| `make NAME=x shell` | `sandbox_shell` | `/shell x` |
-| `make NAME=x stop` | `sandbox_stop` | `/stop x` |
-| `make NAME=x clean` | `sandbox_clean` | `/clean x` |
-| `make NAME=x push` | `sandbox_push` | `/push x` |
-| `make list` | `sandbox_list` | `/list` |
-| `make NAME=x heartbeat` | `sandbox_heartbeat` | `/heartbeat sync x` |
-| `make NAME=x heartbeat-stop` | `sandbox_heartbeat` | `/heartbeat stop x` |
-| `make NAME=x heartbeat-status` | `sandbox_heartbeat` | `/heartbeat status x` |
-| `make NAME=x heartbeat-migrate` | `sandbox_heartbeat` | `/heartbeat migrate x` |
-
-### Core library (`cli/src/lib/`)
-
-**`config.ts`** — SandboxConfig (same as before):
-```typescript
-class SandboxConfig {
-  name: string;
-  branch: string;        // default: agent/{name}
-  baseBranch: string;    // default: development
-  tag: string;           // default: latest
-  docker: boolean;       // default: false
-  registry: string;      // ghcr.io/ryaneggz
-
-  get image(): string { ... }
-  get worktreePath(): string { ... }
-  get projectRoot(): string { ... }
-  composeCmd(): string[] { ... }
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "latest",
+    "@sinclair/typebox": "^0.34.0"
+  }
 }
 ```
 
-**`docker.ts`** — Docker/compose command builders (unchanged)
+Pi auto-discovers `extensions/sandbox.ts` and loads it. The extension registers all 11 tools + slash commands — identical to current `cli/src/extension.ts`.
 
-**`exec.ts`** — Subprocess runner:
-- `run(cmd, opts?)` — `spawnSync` with `stdio: "inherit"`
-- `runSafe(cmd)` — ignores errors
-- `capture(cmd)` — returns stdout
+### CLI subcommand dispatch with optional package
 
-### Installation
-```bash
-cd cli && npm install && npm run build && npm link
+The core `cli/src/index.ts` changes:
+- Subcommands (`list`, `quickstart`, etc.) try to dynamically import from the sandbox package
+- If the package isn't installed, print a helpful error: `"Sandbox tools not installed. Run: openharness install @openharness/sandbox"`
+- Agent mode (no subcommand) just forwards to Pi `main()` — sandbox tools appear automatically if the package is installed
+
+```typescript
+// cli/src/index.ts — subcommand dispatch
+async function runSubcommand(command: string, args: string[]) {
+  try {
+    const sandbox = await import("@openharness/sandbox");
+    // execute tool...
+  } catch {
+    console.error(`Sandbox tools not installed. Run: openharness install @openharness/sandbox`);
+    process.exit(1);
+  }
+}
 ```
-This makes `openharness` available globally. It's a standalone binary that bundles Pi's SDK.
 
-## Testing, Linting & Pre-commit Hooks
+### Core extension (banner only)
 
-### Testing: `vitest`
-- **Unit tests** (`cli/src/__tests__/`):
-  - `config.test.ts` — SandboxConfig defaults, branch resolution, projectRoot detection, env var overrides
-  - `docker.test.ts` — command builder output (compose flags, build args, exec args, DinD overlay)
-  - `tools.test.ts` — tool parameter schemas validate correctly, execute functions produce correct subprocess calls (mocked)
-- Scripts: `npm test` → `vitest run`, `npm run test:watch` → `vitest`
+`cli/src/extension.ts` becomes lean — just the banner extension (or loads it from `workspace/.openharness/extensions/`). No sandbox tool registration.
 
-### Linting: `eslint` + `prettier`
-- ESLint flat config with `@typescript-eslint/parser` + `@typescript-eslint/eslint-plugin`
-- Prettier for formatting
-- Scripts: `npm run lint` → `eslint src/`, `npm run format` → `prettier --write src/`
+### Sandbox package exports
 
-### Pre-commit hooks: `husky` + `lint-staged`
-- `.husky/pre-commit` runs `cd cli && npx lint-staged`
-- lint-staged: `*.ts` → `eslint --fix` + `prettier --write`
-- Also runs `vitest run --reporter=verbose`
+`packages/sandbox/src/index.ts` exports everything needed for CLI subcommand dispatch:
 
-### CI script
-- `npm run ci` → `eslint src/ && prettier --check src/ && vitest run`
+```typescript
+export { sandboxTools } from "./tools/index.js";
+export { listTool, quickstartTool, buildTool, ... } from "./tools/index.js";
+export { SandboxConfig } from "./lib/config.js";
+```
+
+## Branch Strategy
+
+All work continues on `feat/cli` (current branch) — it's the only branch with CLI changes. No new branch needed. PR #18 (`feat/cli` → `development`) will include the full split.
 
 ## Implementation Order
 
-### Phase A: Scaffolding + toolchain
-1. `cli/package.json` — deps: `@mariozechner/pi-coding-agent`, `@sinclair/typebox`, `commander`, dev deps: `typescript`, `vitest`, `eslint`, `@typescript-eslint/*`, `prettier`, `husky`, `lint-staged`
-2. `cli/tsconfig.json` — target ES2022, module NodeNext
-3. `cli/eslint.config.js` — flat config
-4. `cli/.prettierrc`
-5. `cli/vitest.config.ts`
-6. `.husky/pre-commit`
-7. `.gitignore` — add `node_modules/`, `dist/`, `cli/dist/`
+### Phase 1: Create sandbox package
+1. Create `packages/sandbox/package.json` with Pi package manifest
+2. Create `packages/sandbox/tsconfig.json`
+3. Move `cli/src/tools/` → `packages/sandbox/src/tools/`
+4. Move `cli/src/lib/` → `packages/sandbox/src/lib/`
+5. Move `cli/src/__tests__/` → `packages/sandbox/src/__tests__/`
+6. Create `packages/sandbox/extensions/sandbox.ts` — the Pi extension (from current `cli/src/extension.ts`)
+7. Create `packages/sandbox/src/index.ts` — barrel exports
+8. Add vitest, eslint, prettier configs to sandbox package
 
-### Phase B: Core library + tests
-8. `cli/src/lib/config.ts` — SandboxConfig
-9. `cli/src/lib/exec.ts` — subprocess runner
-10. `cli/src/lib/docker.ts` — docker/compose command builders
-11. `cli/src/__tests__/config.test.ts`
-12. `cli/src/__tests__/docker.test.ts`
+### Phase 2: Slim down core CLI
+9. Update `cli/src/index.ts` — dynamic import for subcommands with fallback error
+10. Update `cli/src/extension.ts` — remove sandbox tool registration, keep banner only
+11. Remove `cli/src/tools/`, `cli/src/lib/` (moved to sandbox package)
+12. Remove sandbox-related tests from `cli/src/__tests__/`
+13. Update `cli/package.json` — remove `@sinclair/typebox` dep (only needed by sandbox)
 
-### Phase C: Tools
-13. `cli/src/tools/list.ts` — simplest tool, validates Pi tool pattern
-14. `cli/src/tools/shell.ts` — validates TTY/interactive handling
-15. `cli/src/tools/quickstart.ts` — worktree + build + run + setup
-16. `cli/src/tools/build.ts`, `rebuild.ts`, `run.ts`, `stop.ts`, `clean.ts`, `push.ts`
-17. `cli/src/tools/heartbeat.ts`
-18. `cli/src/tools/index.ts` — exports all tools array
-19. `cli/src/__tests__/tools.test.ts`
+### Phase 3: Wire up local development
+14. Add `@openharness/sandbox` as optional dependency or use npm workspaces
+15. For local dev: `cd packages/sandbox && npm link` then `openharness install ./packages/sandbox`
+16. Update `.gitignore` for `packages/sandbox/dist/`, `packages/sandbox/node_modules/`
 
-### Phase D: Entry point + wiring
-20. `cli/src/index.ts` — parse args, create Pi session with sandbox tools, launch TUI
+## AI Smoke Test (automated, run by Claude)
 
-## Migration Strategy (this PR = Phase 1)
+```
+1. Build both packages
+   cd packages/sandbox && npm install && npm run build
+   cd cli && npm install && npm run build
 
-- **Phase 1** (this PR): `openharness` CLI coexists alongside Makefile. Both work.
-- **Phase 2** (follow-up): Update CLAUDE.md, AGENTS.md, `/provision` skill, README to reference `openharness`.
-- **Phase 3** (follow-up): Remove Makefile.
+2. CI checks — both packages
+   cd packages/sandbox && npm run ci     # lint + format + vitest (42 tests)
+   cd cli && npm run ci                  # lint + format + vitest (core tests)
 
-## Verification
+3. Verify sandbox package structure
+   - package.json has "keywords": ["pi-package"] and "pi" manifest
+   - extensions/sandbox.ts exports default function
+   - src/index.ts barrel-exports all tools
+   - All 11 tools importable from @openharness/sandbox
+
+4. Verify core CLI without sandbox
+   node cli/dist/index.js --version      # prints openharness version
+   node cli/dist/index.js --help         # shows Commands section
+   node cli/dist/index.js list           # prints install prompt, exits 1
+
+5. Install sandbox package locally
+   openharness install ./packages/sandbox
+
+6. Verify core CLI with sandbox
+   node cli/dist/index.js list           # shows containers + worktrees
+   node cli/dist/index.js --help         # same output
+
+7. Verify extension module shape
+   node -e "import('./packages/sandbox/dist/index.js').then(m => {
+     console.log('Tools:', m.sandboxTools.length);
+     console.log('All have execute:', m.sandboxTools.every(t => typeof t.execute === 'function'));
+   })"
+
+8. Pre-commit hook
+   git add . && git commit -m "test"     # lint-staged runs
+```
+
+## Human Smoke Test (manual, requires Docker + interactive terminal)
+
+### Without sandbox package
 
 ```bash
-# Build and install
+# 1. Fresh install
 cd cli && npm install && npm run build && npm link
 
-# Run quality checks
-cd cli && npm run ci                          # lint + format check + tests
+# 2. Verify standalone agent works
+openharness --version                    # → openharness 0.1.0 (pi X.Y.Z)
+openharness --help                       # → Commands section visible
 
-# Test pre-commit hook
-git add cli/ && git commit -m "test: hooks"   # should trigger lint-staged
+# 3. Sandbox commands fail gracefully
+openharness list                         # → "Sandbox tools not installed..."
+openharness quickstart foo               # → same error
 
-# Launch openharness
+# 4. Agent mode works (TUI)
+openharness                              # → Pi TUI launches
+# Verify: no sandbox tools in tool list
+# Verify: banner shows "Open Harness"
+# Ctrl-C to exit
+```
+
+### With sandbox package
+
+```bash
+# 5. Install sandbox package
+openharness install ./packages/sandbox
+
+# 6. CLI subcommands work
+openharness list                         # → shows containers + worktrees
+
+# 7. Full lifecycle (requires Docker)
+openharness quickstart test-smoke --base-branch main
+openharness list                         # → test-smoke appears
+openharness shell test-smoke             # → bash shell opens, exit
+openharness heartbeat status test-smoke
+openharness stop test-smoke
+openharness clean test-smoke             # → container + worktree removed
+openharness list                         # → test-smoke gone
+
+# 8. Agent mode with sandbox tools
 openharness
+# Inside TUI:
+#   /list                                → works
+#   "list all running sandboxes"         → LLM calls sandbox_list tool
+#   Ctrl-C to exit
 
-# Inside openharness TUI:
-> /list                                        # direct slash command
-> /quickstart test-cli --base-branch main      # direct slash command
-> /shell test-cli                              # interactive shell
-> /heartbeat status test-cli
-> /stop test-cli
-> /clean test-cli
-> "please list all running sandboxes"          # conversational (LLM uses sandbox_list tool)
+# 9. Uninstall sandbox
+openharness remove @openharness/sandbox
+openharness list                         # → back to "not installed" error
 ```
 
-## Follow-up: Add CLI subcommands, fix --help, remove Makefile
-
-### Problem
-Slash commands only work inside the TUI. There's no way to run `openharness list` from the terminal. The Makefile gave `make list`, `make NAME=foo quickstart` — the CLI replacement must match.
-
-### Solution: CLI subcommands in `cli/src/index.ts`
-
-Intercept known subcommands before forwarding to Pi's `main()`:
-
-```
-openharness list                                → execute sandbox_list, print, exit
-openharness quickstart <name> [--base-branch..]  → execute sandbox_quickstart, print, exit
-openharness build <name>                         → execute sandbox_build, print, exit
-openharness rebuild <name>                       → execute sandbox_rebuild, print, exit
-openharness run <name>                           → execute sandbox_run, print, exit
-openharness shell <name>                         → execute sandbox_shell (interactive)
-openharness stop <name>                          → execute sandbox_stop, print, exit
-openharness clean <name>                         → execute sandbox_clean, print, exit
-openharness push <name>                          → execute sandbox_push, print, exit
-openharness heartbeat <action> <name>            → execute sandbox_heartbeat, print, exit
-openharness worktree <name> [--base-branch..]    → execute sandbox_worktree, print, exit
-openharness [pi args...]                         → forward to Pi main() (TUI/print/rpc)
-```
-
-Implementation in `cli/src/index.ts`:
-1. Parse first arg — if it matches a subcommand name, handle directly
-2. Parse remaining args into tool params (name, --base-branch, --docker, --tag)
-3. Import the tool, call its `execute()` directly, print result text, exit
-4. If no subcommand match, forward all args to `main()` as before
-
-### --help restructure
-
-Show CLI subcommands as the primary interface:
-
-```
-openharness — AI-powered sandbox orchestrator
-
-Usage:
-  openharness <command> [options]
-  openharness [pi-options] [messages...]     Launch AI agent mode
-
-Commands:
-  list                          List running sandboxes and worktrees
-  quickstart <name> [options]   Full setup: worktree + build + run + setup
-  build <name>                  Build Docker image
-  ...
-
-Agent Mode:
-  Run without a command to launch the interactive AI agent.
-  The agent has access to all sandbox tools and can orchestrate
-  multi-step workflows conversationally.
-```
-
-### Remove Makefile
-
-Delete `Makefile` from repo root.
-
-### Files Modified
-- `cli/src/index.ts` — add subcommand dispatch + restructure `printHelp()`
-- `Makefile` — DELETE
+## Files Modified
+- `cli/src/index.ts` — dynamic import for subcommands
+- `cli/src/extension.ts` — strip sandbox tools, keep banner
+- `cli/package.json` — remove @sinclair/typebox
+- `cli/src/tools/` — DELETE (moved)
+- `cli/src/lib/` — DELETE (moved)
+- `cli/src/__tests__/` — remove sandbox tests
+- `packages/sandbox/` — ALL NEW
+- `.gitignore` — add packages/sandbox artifacts
