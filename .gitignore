@@ -1,3 +1,13 @@
 **/.env*
 .worktrees/*
 !.worktrees/.gitkeep
+
+# CLI build artifacts
+node_modules/
+dist/
+cli/dist/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
