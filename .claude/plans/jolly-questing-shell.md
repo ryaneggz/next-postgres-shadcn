@@ -263,7 +263,63 @@ openharness
 > "please list all running sandboxes"          # conversational (LLM uses sandbox_list tool)
 ```
 
-## Files Modified
-- `.gitignore` — add `node_modules/`, `dist/`, `cli/dist/`
-- `.husky/pre-commit` — NEW pre-commit hook
-- All `cli/` files are NEW (package.json, tsconfig, eslint, prettier, vitest, src/)
+## Follow-up: Add CLI subcommands, fix --help, remove Makefile
+
+### Problem
+Slash commands only work inside the TUI. There's no way to run `openharness list` from the terminal. The Makefile gave `make list`, `make NAME=foo quickstart` — the CLI replacement must match.
+
+### Solution: CLI subcommands in `cli/src/index.ts`
+
+Intercept known subcommands before forwarding to Pi's `main()`:
+
+```
+openharness list                                → execute sandbox_list, print, exit
+openharness quickstart <name> [--base-branch..]  → execute sandbox_quickstart, print, exit
+openharness build <name>                         → execute sandbox_build, print, exit
+openharness rebuild <name>                       → execute sandbox_rebuild, print, exit
+openharness run <name>                           → execute sandbox_run, print, exit
+openharness shell <name>                         → execute sandbox_shell (interactive)
+openharness stop <name>                          → execute sandbox_stop, print, exit
+openharness clean <name>                         → execute sandbox_clean, print, exit
+openharness push <name>                          → execute sandbox_push, print, exit
+openharness heartbeat <action> <name>            → execute sandbox_heartbeat, print, exit
+openharness worktree <name> [--base-branch..]    → execute sandbox_worktree, print, exit
+openharness [pi args...]                         → forward to Pi main() (TUI/print/rpc)
+```
+
+Implementation in `cli/src/index.ts`:
+1. Parse first arg — if it matches a subcommand name, handle directly
+2. Parse remaining args into tool params (name, --base-branch, --docker, --tag)
+3. Import the tool, call its `execute()` directly, print result text, exit
+4. If no subcommand match, forward all args to `main()` as before
+
+### --help restructure
+
+Show CLI subcommands as the primary interface:
+
+```
+openharness — AI-powered sandbox orchestrator
+
+Usage:
+  openharness <command> [options]
+  openharness [pi-options] [messages...]     Launch AI agent mode
+
+Commands:
+  list                          List running sandboxes and worktrees
+  quickstart <name> [options]   Full setup: worktree + build + run + setup
+  build <name>                  Build Docker image
+  ...
+
+Agent Mode:
+  Run without a command to launch the interactive AI agent.
+  The agent has access to all sandbox tools and can orchestrate
+  multi-step workflows conversationally.
+```
+
+### Remove Makefile
+
+Delete `Makefile` from repo root.
+
+### Files Modified
+- `cli/src/index.ts` — add subcommand dispatch + restructure `printHelp()`
+- `Makefile` — DELETE
