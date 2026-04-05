@@ -22,12 +22,15 @@ export const SUBCOMMANDS = new Set([
   "push",
   "heartbeat",
   "worktree",
+  "ralph",
 ]);
 
 export const INSTALL_HINT =
   "Sandbox tools not installed. Run: openharness install @openharness/sandbox";
 
 export const HEARTBEAT_ACTIONS = ["sync", "stop", "status", "migrate"] as const;
+
+export const RALPH_ACTIONS = ["prd", "setup", "run", "status", "reflect", "cleanup", "pr"] as const;
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -47,6 +50,7 @@ export interface SandboxModule {
   pushTool: ToolDefinition;
   heartbeatTool: ToolDefinition;
   worktreeTool: ToolDefinition;
+  ralphTool: ToolDefinition;
 }
 
 // ─── Argument parsing ──────────────────────────────────────────────
@@ -123,6 +127,22 @@ export function resolveSubcommand(
     return { tool: sandbox.heartbeatTool, params: { name, action } };
   }
 
+  // ralph: <action> <name> [--iterations N]
+  if (command === "ralph") {
+    const action = args[0];
+    const name = args[1];
+    if (!action || !name || !(RALPH_ACTIONS as readonly string[]).includes(action)) {
+      return { error: "Usage: openharness ralph <prd|setup|run|status|reflect|cleanup|pr> <name>" };
+    }
+    const params: Record<string, unknown> = { name, action };
+    // Parse --iterations for ralph run
+    const iterIdx = args.indexOf("--iterations");
+    if (iterIdx !== -1 && args[iterIdx + 1]) {
+      params.iterations = parseInt(args[iterIdx + 1], 10);
+    }
+    return { tool: sandbox.ralphTool, params };
+  }
+
   // list: no name required
   if (command === "list") {
     return { tool: sandbox.listTool, params: {} };
@@ -179,12 +199,14 @@ ${b}Commands:${r} ${d}(requires: openharness install @openharness/sandbox)${r}
   ${b}push${r} <name>                       Push image to registry
   ${b}worktree${r} <name> [options]         Create git worktree only
   ${b}heartbeat${r} <action> <name>         Manage heartbeats (sync|stop|status|migrate)
+  ${b}ralph${r} <action> <name>             Ralph workflow (prd|setup|run|status|reflect|cleanup|pr)
 
 ${b}Command Options:${r}
   --base-branch <branch>           Base branch (default: main)
   --docker                         Enable Docker-in-Docker
   --tag <tag>                      Image tag (default: latest)
   --branch <branch>                Git branch (default: agent/<name>)
+  --iterations <n>                 Max iterations for ralph run (default: 200)
 
 ${b}Agent Mode:${r}
   Run without a command to launch the interactive AI agent.

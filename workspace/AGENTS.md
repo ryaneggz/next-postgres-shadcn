@@ -200,3 +200,43 @@ cloudflared tunnel run next-postgres-shadcn
 # QA via browser
 # (use agent-browser to navigate to https://next-postgres-shadcn.ruska.dev)
 ```
+
+### Ralph (Autonomous Agent Loop)
+
+Ralph is an autonomous coding agent that works through a PRD (Product Requirements Document), implementing user stories one at a time in a loop.
+
+**Directory**: `.ralph/` at workspace root
+
+| File | Purpose |
+|------|---------|
+| `.ralph/prd.json` | User stories with `passes: true/false` |
+| `.ralph/progress.txt` | Append-only log + Codebase Patterns section |
+| `.ralph/prompt.md` | Agent instructions per iteration |
+| `.ralph/archive/<branch>/` | Archived runs (by branch name) |
+
+**Skills** (use as slash commands):
+- `/prd` -- Generate a PRD from a feature description or plan
+- `/ralph` -- Convert a PRD to `.ralph/prd.json` format
+
+**CLI commands** (from orchestrator):
+
+```bash
+# Full workflow: plan → PRD → prd.json → loop → reflect → cleanup → PR
+openharness ralph prd <name>                    # Generate PRD from plan
+openharness ralph setup <name>                  # Convert PRD → prd.json + draft PR
+openharness ralph run <name>                    # Start loop in tmux (200 iterations)
+openharness ralph run <name> --iterations 50    # Custom iteration limit
+openharness ralph status <name>                 # Check progress
+openharness ralph reflect <name>                # Update MEMORY.md from session
+openharness ralph cleanup <name>                # Lint, format, type-check, test
+openharness ralph pr <name>                     # Archive run + undraft PR
+```
+
+**Design principles**:
+- Each iteration works on ONE story, commits, and validates (tight feedback loops)
+- Stories must be small enough for one context window
+- If context reaches ~50% of the window, wrap up and exit cleanly (stay in the smart zone)
+- `reflect` encodes actionable intelligence for future sessions, not just summaries
+- Archives are named by branch, not date -- memory handles daily records
+
+**Slack notifications**: On Stop and Notification events, hooks send updates to Slack via `.claude/hooks/notify_slack.sh`. Configure webhook URL in `.claude/.env.claude`.

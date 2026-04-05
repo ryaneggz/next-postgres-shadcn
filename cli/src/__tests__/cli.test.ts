@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   SUBCOMMANDS,
   HEARTBEAT_ACTIONS,
+  RALPH_ACTIONS,
   INSTALL_HINT,
   parseToolArgs,
   formatResult,
@@ -36,6 +37,7 @@ function makeMockSandbox(): SandboxModule {
     pushTool: makeMockTool("sandbox_push"),
     heartbeatTool: makeMockTool("sandbox_heartbeat"),
     worktreeTool: makeMockTool("sandbox_worktree"),
+    ralphTool: makeMockTool("sandbox_ralph"),
   };
 }
 
@@ -54,6 +56,7 @@ describe("SUBCOMMANDS", () => {
     "push",
     "heartbeat",
     "worktree",
+    "ralph",
   ];
 
   it("contains all expected subcommands", () => {
@@ -76,6 +79,20 @@ describe("SUBCOMMANDS", () => {
 describe("HEARTBEAT_ACTIONS", () => {
   it("contains sync, stop, status, migrate", () => {
     expect([...HEARTBEAT_ACTIONS]).toEqual(["sync", "stop", "status", "migrate"]);
+  });
+});
+
+describe("RALPH_ACTIONS", () => {
+  it("contains all ralph actions", () => {
+    expect([...RALPH_ACTIONS]).toEqual([
+      "prd",
+      "setup",
+      "run",
+      "status",
+      "reflect",
+      "cleanup",
+      "pr",
+    ]);
   });
 });
 
@@ -264,6 +281,47 @@ describe("resolveSubcommand", () => {
     });
   });
 
+  describe("ralph command", () => {
+    it("resolves with valid action and name", () => {
+      const result = resolveSubcommand("ralph", ["run", "my-agent"], sandbox);
+      expect("tool" in result).toBe(true);
+      if ("tool" in result) {
+        expect(result.tool).toBe(sandbox.ralphTool);
+        expect(result.params).toEqual({ name: "my-agent", action: "run" });
+      }
+    });
+
+    for (const action of RALPH_ACTIONS) {
+      it(`accepts action: ${action}`, () => {
+        const result = resolveSubcommand("ralph", [action, "test"], sandbox);
+        expect("tool" in result).toBe(true);
+      });
+    }
+
+    it("parses --iterations flag", () => {
+      const result = resolveSubcommand("ralph", ["run", "my-agent", "--iterations", "50"], sandbox);
+      expect("tool" in result).toBe(true);
+      if ("tool" in result) {
+        expect(result.params).toEqual({ name: "my-agent", action: "run", iterations: 50 });
+      }
+    });
+
+    it("returns error for missing action", () => {
+      const result = resolveSubcommand("ralph", [], sandbox);
+      expect("error" in result).toBe(true);
+    });
+
+    it("returns error for missing name", () => {
+      const result = resolveSubcommand("ralph", ["run"], sandbox);
+      expect("error" in result).toBe(true);
+    });
+
+    it("returns error for invalid action", () => {
+      const result = resolveSubcommand("ralph", ["invalid", "my-agent"], sandbox);
+      expect("error" in result).toBe(true);
+    });
+  });
+
   describe("named commands", () => {
     const commands = [
       "quickstart",
@@ -385,6 +443,7 @@ describe("helpText", () => {
     expect(text).toContain("--docker");
     expect(text).toContain("--tag");
     expect(text).toContain("--branch");
+    expect(text).toContain("--iterations");
   });
 
   it("documents agent mode options", () => {
