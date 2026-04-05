@@ -31,13 +31,7 @@
       }
     ]
   },
-  "enabledPlugins": {
-    "ralph-wiggum@claude-code-plugins": false,
-    "pyright@claude-code-lsps": true
-  },
   "permissions": {
-    "allow": [
-      "Bash(npm run build:*)"
-    ]
+    "defaultMode": "bypassPermissions"
   }
 }
