@@ -19,19 +19,41 @@ Full Stack Developer agent building Next.js + TypeScript + PostgreSQL + shadcn/u
 
 ## Quick Start
 
-### Option A — Open Harness Sandbox (from orchestrator)
-
-If you're running the Open Harness orchestrator, provision and enter this agent in one step:
+1. **Clone and install** the Open Harness CLI:
 
 ```bash
-openharness quickstart next-postgres-shadcn --base-branch development --docker
-openharness shell next-postgres-shadcn
-claude                                    # start the AI agent
+git clone https://github.com/ryaneggz/open-harness.git && cd open-harness
+npm run setup
 ```
 
-### Option B — Standalone Dev Container
+2. **Provision** the sandbox (includes PostgreSQL + port 3000):
 
-This branch can be used as a standalone project without the orchestrator. Clone the branch directly and open it as a Dev Container:
+```bash
+openharness quickstart next-postgres-shadcn --base-branch main
+```
+
+> **Note:** This agent requires compose overrides for PostgreSQL and port mapping. After quickstart creates the worktree, start services with both compose files:
+> ```bash
+> WTREE=".worktrees/agent/next-postgres-shadcn"
+> NAME=next-postgres-shadcn HARNESS_ROOT="$(realpath $WTREE)" HOST_WORKSPACE="$(realpath $WTREE)" \
+>   docker compose -f "$WTREE/docker/docker-compose.yml" -f "$WTREE/docker/docker-compose.nextjs.yml" \
+>   -p next-postgres-shadcn up -d
+> ```
+
+3. **Enter and start working:**
+
+```bash
+openharness shell next-postgres-shadcn
+cd workspace/next-app
+npm install && npm run dev            # Dev server on 0.0.0.0:3000
+claude                                # start the AI agent
+```
+
+> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Node.js](https://nodejs.org/) (v20+).
+
+### Dev Container (Optional)
+
+This branch can also be used as a standalone Dev Container without the orchestrator:
 
 1. **Clone the branch**:
 
@@ -40,7 +62,7 @@ git clone -b agent/next-postgres-shadcn https://github.com/ryaneggz/open-harness
 cd next-postgres-shadcn
 ```
 
-2. **Open in VS Code** and select **"Reopen in Container"** from the Command Palette (`Ctrl+Shift+P` → `Dev Containers: Reopen in Container`). The Dev Containers extension handles everything automatically.
+2. **Open in VS Code** and select **"Reopen in Container"** (`Ctrl+Shift+P` → `Dev Containers: Reopen in Container`).
 
    **Or run manually**:
 
@@ -49,36 +71,13 @@ docker compose -f .devcontainer/docker-compose.yml up -d
 ssh orchestrator@localhost -p 2222   # password: test1234
 ```
 
-3. **Inside the container**, navigate to the workspace and start developing:
-
-```bash
-cd workspace/next-app
-npm install
-npm run dev                   # Dev server on port 3000
-```
-
-#### Dev Container Credentials
-
 | Field | Value |
 |-------|-------|
 | User | `orchestrator` |
 | Password (SSH + sudo) | `test1234` |
 | SSH Port | `2222` |
 
-#### VS Code Remote-SSH Config
-
-Add to `~/.ssh/config` on your host:
-
-```
-Host next-postgres-shadcn
-    HostName localhost
-    Port 2222
-    User orchestrator
-```
-
-Then connect via **Remote-SSH: Connect to Host...** → `next-postgres-shadcn`.
-
-> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Node.js](https://nodejs.org/) (v20+). VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for the Dev Container workflow.
+> Requires VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
 ---
 
@@ -117,10 +116,9 @@ These steps require manual authentication regardless of how you started the envi
 Exposes the dev server at `next-postgres-shadcn.ruska.dev`:
 
 ```bash
-cloudflared tunnel login                              # Opens browser for Cloudflare auth
-cloudflared tunnel create next-postgres-shadcn        # Creates tunnel credentials
-cloudflared tunnel route dns next-postgres-shadcn next-postgres-shadcn.ruska.dev
-cloudflared tunnel run next-postgres-shadcn           # Start the tunnel
+cloudflared login                                                         # Opens browser for Cloudflare auth (one-time)
+~/install/cloudflared-tunnel.sh next-postgres-shadcn next-postgres-shadcn.ruska.dev 3000  # Creates tunnel, config, DNS route
+cloudflared tunnel --config ~/.cloudflared/config-next-postgres-shadcn.yml run next-postgres-shadcn  # Start the tunnel
 ```
 
 ### GitHub CLI
@@ -158,7 +156,7 @@ Set in `next-app/.env` or container env:
 ```bash
 cd workspace/next-app
 npm run dev                                           # Dev server on port 3000
-cloudflared tunnel run next-postgres-shadcn           # Expose publicly (optional)
+cloudflared tunnel --config ~/.cloudflared/config-next-postgres-shadcn.yml run next-postgres-shadcn  # Expose publicly (optional)
 claude                                                # Start AI agent
 ```
 
@@ -240,7 +238,7 @@ openharness heartbeat status next-postgres-shadcn   # Show schedules + recent lo
 openharness heartbeat stop next-postgres-shadcn     # Remove all schedules
 ```
 
-### Dev Container Teardown
+### Dev Container Teardown (if using Dev Container)
 
 ```bash
 docker compose -f .devcontainer/docker-compose.yml down
