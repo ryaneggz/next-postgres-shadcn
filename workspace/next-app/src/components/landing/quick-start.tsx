@@ -1,38 +1,17 @@
 import type { ReactNode } from "react";
 import { CopyButton } from "./copy-button";
 
-const quickStartCode = `# Clone and install the CLI
-git clone -b agent/next-postgres-shadcn \\
+const setupCode = `git clone -b agent/next-postgres-shadcn \\
   https://github.com/ryaneggz/open-harness.git \\
   next-postgres-shadcn && cd next-postgres-shadcn
 npm run setup
+claude --permission-mode plan`;
 
-# Start Claude in plan mode
-claude --permission-mode plan
-
-# Tell it what to do:
-# "Provision this harness. Generate an SSH key and
-#  return the public key for me to add to GitHub.
-#  Configure gh CLI auth. Set up the cloudflared
-#  tunnel. Pause whenever you need me to authenticate."
-
-# The agent will:
-# 1. Build image, start PostgreSQL + sandbox
-# 2. Generate SSH key → give you the pub key to add
-# 3. Pause for: cloudflared login, gh auth login
-# 4. After you confirm, finish tunnel + dev server`;
+const exampleQuery = `Provision this harness. Generate an SSH key and return the public key for me to add to GitHub. Configure gh CLI auth. Set up the cloudflared tunnel. Pause whenever you need me to authenticate.`;
 
 const COMMANDS = new Set(["git", "npm", "claude"]);
 
 function highlightLine(line: string, index: number): ReactNode {
-  if (line.startsWith("#")) {
-    return (
-      <span key={index} className="text-emerald-600 dark:text-emerald-400 italic">
-        {line}
-      </span>
-    );
-  }
-
   const tokens = line.split(/(\s+)/);
   let commandFound = false;
 
@@ -80,35 +59,71 @@ function highlightLine(line: string, index: number): ReactNode {
   );
 }
 
-export function QuickStart() {
-  const lines = quickStartCode.split("\n");
+function TerminalBlock({ code, label }: { code: string; label: string }) {
+  const lines = code.split("\n");
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-border/50 bg-muted/50">
+      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
+        <div className="h-3 w-3 rounded-full bg-red-500/20" />
+        <div className="h-3 w-3 rounded-full bg-yellow-500/20" />
+        <div className="h-3 w-3 rounded-full bg-green-500/20" />
+        <span className="ml-2 text-xs text-muted-foreground">{label}</span>
+      </div>
+      <CopyButton text={code} />
+      <pre className="overflow-x-auto p-4 text-sm leading-relaxed">
+        <code>
+          {lines.map((line, i) => (
+            <span key={i}>
+              {highlightLine(line, i)}
+              {i < lines.length - 1 ? "\n" : ""}
+            </span>
+          ))}
+        </code>
+      </pre>
+    </div>
+  );
+}
 
+const steps = [
+  "Builds Docker image, starts PostgreSQL + sandbox container",
+  "Generates SSH key — gives you the public key to add to GitHub",
+  "Pauses for auth: cloudflared login, gh auth login",
+  "After you confirm, configures tunnel + starts dev server",
+];
+
+export function QuickStart() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-16">
       <h2 className="mb-2 text-center text-2xl font-bold tracking-tight sm:text-3xl">
         Quick Start
       </h2>
       <p className="mb-8 text-center text-muted-foreground">
-        Clone, start Claude Code, and let the agent provision everything. You only authenticate.
+        Three commands. The agent handles the rest — you only authenticate.
       </p>
-      <div className="relative mx-auto max-w-3xl overflow-hidden rounded-lg border border-border/50 bg-muted/50">
-        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
-          <div className="h-3 w-3 rounded-full bg-red-500/20" />
-          <div className="h-3 w-3 rounded-full bg-yellow-500/20" />
-          <div className="h-3 w-3 rounded-full bg-green-500/20" />
-          <span className="ml-2 text-xs text-muted-foreground">terminal</span>
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+        <TerminalBlock code={setupCode} label="terminal" />
+
+        <div className="relative overflow-hidden rounded-lg border border-border/50 bg-muted/30">
+          <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
+            <span className="text-xs font-medium text-muted-foreground">Example prompt</span>
+          </div>
+          <CopyButton text={exampleQuery} />
+          <p className="p-4 text-sm leading-relaxed italic text-muted-foreground">
+            &ldquo;{exampleQuery}&rdquo;
+          </p>
         </div>
-        <CopyButton text={quickStartCode} />
-        <pre className="overflow-x-auto p-4 text-sm leading-relaxed">
-          <code>
-            {lines.map((line, i) => (
-              <span key={i}>
-                {highlightLine(line, i)}
-                {i < lines.length - 1 ? "\n" : ""}
-              </span>
+
+        <div className="rounded-lg border border-border/50 p-4">
+          <p className="mb-3 text-sm font-medium">The agent will:</p>
+          <ol className="space-y-1.5 text-sm text-muted-foreground">
+            {steps.map((step, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="font-mono text-xs text-foreground">{i + 1}.</span>
+                {step}
+              </li>
             ))}
-          </code>
-        </pre>
+          </ol>
+        </div>
       </div>
     </section>
   );
