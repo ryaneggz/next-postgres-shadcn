@@ -1,42 +1,34 @@
 import type { ReactNode } from "react";
 import { CopyButton } from "./copy-button";
 
-const quickStartCode = `# 1. Clone the harness and install the CLI
+const quickStartCode = `# 1. Clone and install
 git clone -b agent/next-postgres-shadcn \\
   https://github.com/ryaneggz/open-harness.git \\
   next-postgres-shadcn && cd next-postgres-shadcn
 npm run setup
 
-# 2. Build, start PostgreSQL + sandbox, run setup
-docker build -f docker/Dockerfile -t next-postgres-shadcn .
-docker compose -f docker/docker-compose.yml \\
-  -f docker/docker-compose.nextjs.yml \\
-  -p next-postgres-shadcn up -d
-docker exec --user root next-postgres-shadcn \\
-  bash -c "chmod +x /home/sandbox/install/*.sh \\
-  && bash /home/sandbox/install/setup.sh --non-interactive"
+# 2. Start Claude Code — it provisions everything
+claude
 
-# 3. Enter sandbox and install app deps
-openharness shell next-postgres-shadcn
-cd workspace/next-app && npm install && npm run dev
+# ── Agent auto-provisions ─────────────────────
+# → Builds Docker image
+# → Starts PostgreSQL + sandbox container
+# → Runs setup.sh (Node, CLI tools, agents)
+# → Installs next-app dependencies
+# → Starts dev server on port 3000
 
-# ── Auth boundary (manual, one-time) ──────────
-# Cloudflare tunnel (exposes app publicly):
-cloudflared login
-~/install/cloudflared-tunnel.sh \\
-  next-postgres-shadcn next-postgres-shadcn.ruska.dev 3000
+# ── Auth boundary (agent pauses, you act) ─────
+# Agent prompts you to authenticate:
+cloudflared login          # Cloudflare tunnel
+gh auth login              # GitHub CLI
 
-# GitHub CLI:
-gh auth login
+# ── Agent resumes after auth ──────────────────
+# → Configures tunnel to your-app.ruska.dev
+# → Starts cloudflared tunnel
+# → Validates app with agent-browser
+# → Reports: "Ready! Dev server + tunnel live."`;
 
-# ── Resume ────────────────────────────────────
-# Start the tunnel + dev server:
-cloudflared tunnel --config \\
-  ~/.cloudflared/config-next-postgres-shadcn.yml \\
-  run next-postgres-shadcn
-npm run dev`;
-
-const COMMANDS = new Set(["git", "npm", "docker", "openharness", "cd"]);
+const COMMANDS = new Set(["git", "npm", "claude", "cloudflared", "gh"]);
 
 function highlightLine(line: string, index: number): ReactNode {
   if (line.startsWith("#")) {
@@ -103,7 +95,7 @@ export function QuickStart() {
         Quick Start
       </h2>
       <p className="mb-8 text-center text-muted-foreground">
-        Clone, provision, and start developing in under 5 minutes.
+        Clone, start Claude Code, and let the agent provision everything. You only authenticate.
       </p>
       <div className="relative mx-auto max-w-3xl overflow-hidden rounded-lg border border-border/50 bg-muted/50">
         <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
