@@ -45,10 +45,15 @@ workspace/
     src/lib/            # Utilities
     prisma/             # Database schema & migrations
   .claude/skills/       # Slash command skills (see below)
+  .claude/agents/       # Sub-agent definitions (implementer, critic, pm, council)
+  .claude/rules/        # Coding standards + workflow rules
   .ralph/               # Autonomous agent loop (PRD → implement → validate)
   heartbeats/           # Periodic task definitions
   memory/               # Daily append-only logs
-  SOUL.md / MEMORY.md   # Identity and context
+  IDENTITY.md           # Quick-reference identity card
+  USER.md               # Owner preferences and constraints
+  SOUL.md               # Persona, practices, boundaries, memory protocol
+  MEMORY.md             # Curated long-term memory
 ```
 
 ## Skills
@@ -61,6 +66,7 @@ Available as slash commands inside the workspace:
 | `/agent-browser` | QA, verifying UI, taking screenshots | Navigate, interact with, and screenshot the app via headless browser |
 | `/prd` | Planning a feature, writing requirements | Generate a Product Requirements Document |
 | `/ralph` | Converting a PRD for autonomous loop | Convert PRD to `.ralph/prd.json` format |
+| `/issue-triage` | Heartbeat (hourly) or manual triage | Check for unassigned issues, spawn sub-agents, council review, draft PR |
 | `/quality-gate` | Before consequential actions | Template: validate decisions against thresholds |
 | `/strategy-review` | Periodic self-assessment | Template: measure decision quality over time |
 
