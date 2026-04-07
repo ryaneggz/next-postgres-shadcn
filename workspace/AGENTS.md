@@ -48,6 +48,8 @@ All tools are installed system-wide in `/usr/local/bin` or via apt:
 - Use `docker compose` to manage services; the sandbox can reach host containers via `host.docker.internal`
 - `CLAUDE.md` and `AGENTS.md` are symlinked -- editing either updates both
 - Agent config directories (`.openharness/`, `.claude/`, `.codex/`) are in the workspace root
+- `.openharness/config.json` declares compose overrides (e.g., `docker-compose.nextjs.yml` for PostgreSQL + port mapping)
+- `~/install/cloudflared-tunnel.sh` is a reusable script for setting up named Cloudflare tunnels
 
 ## Soul
 
@@ -103,7 +105,7 @@ This sandbox is configured as a Full Stack Developer harness. The project lives 
 
 ### Next.js
 
-- **Dev server**: `npm run dev` (port 3000, exposed to host and via cloudflared)
+- **Dev server**: `npm run dev` (port 3000, binds `0.0.0.0`, exposed to host and via cloudflared)
 - **Build**: `npm run build`
 - **Project structure**: App Router in `next-app/src/app/`, components in `next-app/src/components/`, utilities in `next-app/src/lib/`
 - **TypeScript**: Strict mode enabled
@@ -154,9 +156,12 @@ GitHub Actions runs on every push (mirrors pre-commit checks):
 ### Cloudflared Tunnel
 
 - **Public URL**: `https://next-postgres-shadcn.ruska.dev`
-- **Start**: `cloudflared tunnel run next-postgres-shadcn`
-- **Config**: `~/.cloudflared/config.yml`
+- **Config**: `~/.cloudflared/config-next-postgres-shadcn.yml`
+- **Tunnel ID**: stored in `~/.cloudflared/<uuid>.json`
+- **Start**: `cloudflared tunnel --config ~/.cloudflared/config-next-postgres-shadcn.yml run next-postgres-shadcn`
 - Dev server must be running (`npm run dev`) for the tunnel to serve content
+- **First-time setup** (after provisioning): authenticate with `cloudflared login`, then run `~/install/cloudflared-tunnel.sh next-postgres-shadcn next-postgres-shadcn.ruska.dev 3000`
+- The tunnel script creates the named tunnel, writes the config, and routes DNS automatically
 
 ### QA with agent-browser
 
@@ -195,7 +200,7 @@ npm run lint
 npm run format
 
 # Start cloudflared tunnel
-cloudflared tunnel run next-postgres-shadcn
+cloudflared tunnel --config ~/.cloudflared/config-next-postgres-shadcn.yml run next-postgres-shadcn
 
 # QA via browser
 # (use agent-browser to navigate to https://next-postgres-shadcn.ruska.dev)
