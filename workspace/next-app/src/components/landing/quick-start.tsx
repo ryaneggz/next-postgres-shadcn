@@ -1,25 +1,56 @@
 import type { ReactNode } from "react";
 import { CopyButton } from "./copy-button";
 
-const setupCode = `git clone -b agent/next-postgres-shadcn \\
+const setupCode = `# Clone the harness
+git clone -b agent/next-postgres-shadcn \\
   https://github.com/ryaneggz/open-harness.git \\
-  next-postgres-shadcn && cd next-postgres-shadcn
+  next-postgres-shadcn
+cd next-postgres-shadcn
+
+# Install the CLI
 npm run setup
-claude --permission-mode plan -p "Provision this harness. \\
-  Generate an SSH key and return the pub key for me to add \\
-  to GitHub. Configure gh CLI. Set up the cloudflared tunnel. \\
-  Pause whenever you need me to authenticate."`;
+
+# Provision — the agent handles everything
+claude --permission-mode plan -p "Provision this harness"`;
 
 const COMMANDS = new Set(["git", "npm", "claude"]);
 
 function highlightLine(line: string, index: number): ReactNode {
+  const trimmed = line.trimStart();
+
+  if (trimmed.startsWith("#")) {
+    return (
+      <span key={index} className="text-emerald-600 dark:text-emerald-400 italic">
+        {line}
+      </span>
+    );
+  }
+
+  if (trimmed.startsWith('"') || trimmed.startsWith("'")) {
+    return (
+      <span key={index} className="text-amber-600 dark:text-amber-400">
+        {line}
+      </span>
+    );
+  }
+
   const tokens = line.split(/(\s+)/);
   let commandFound = false;
+  let inString = false;
 
   return (
     <span key={index}>
       {tokens.map((token, i) => {
         if (/^\s+$/.test(token)) return token;
+
+        if (token.includes('"')) inString = !inString;
+        if (inString || token.startsWith('"')) {
+          return (
+            <span key={i} className="text-amber-600 dark:text-amber-400">
+              {token}
+            </span>
+          );
+        }
 
         if (!commandFound && COMMANDS.has(token)) {
           commandFound = true;
@@ -46,7 +77,7 @@ function highlightLine(line: string, index: number): ReactNode {
           );
         }
 
-        if (token.includes("/") || token.includes(".") || token.startsWith("https:")) {
+        if (token.includes("/") || token.startsWith("https:")) {
           return (
             <span key={i} className="text-amber-600 dark:text-amber-400">
               {token}
