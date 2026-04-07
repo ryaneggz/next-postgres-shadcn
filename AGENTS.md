@@ -1,120 +1,69 @@
-# Open Harness — Orchestrator
+# next-postgres-shadcn — Full Stack Developer Workspace
 
-You are the harness orchestrator. You run at the project root. You do NOT write application code. Your sole purpose is to manage sandboxed agent workspaces in `.worktrees/`.
+A Next.js + TypeScript + PostgreSQL + shadcn/ui development workspace running inside an [Open Harness](https://github.com/ryaneggz/open-harness) sandbox.
 
-## Permissions
+## Stack
 
-Your primary operations are git (`git add`, `git commit`, `git push`) and sandbox lifecycle management. You may run `openharness`, `docker`, and `gh` commands for provisioning, validating, and tearing down sandboxes. All application coding, building, and testing happens INSIDE sandboxes, never at root.
+- Next.js 16 (App Router, TypeScript strict, Turbopack)
+- PostgreSQL 16 (Docker Compose, Prisma ORM)
+- shadcn/ui + Tailwind CSS v4
+- next-themes (light/dark/system)
+- next-pwa (Progressive Web App)
+- Cloudflared tunnel → `next-postgres-shadcn.ruska.dev`
 
-## Lifecycle
+## Working Directory
 
-### Setup
+Your code lives in `workspace/next-app/`. Run all npm commands from there.
 
-Provision a new agent sandbox. The human runs all host commands.
+## Identity & Context
 
-1. Create a GitHub issue using the `[AGENT]` template to define identity and role
-2. Provision the sandbox:
-   ```bash
-   openharness quickstart <agent-name> --base-branch main
-   ```
-   Creates: git worktree at `.worktrees/agent/<agent-name>` on branch `agent/<agent-name>`, Docker image, running container, provisioned environment. Worktree paths mirror branch paths (e.g., branch `agent/foo` → `.worktrees/agent/foo`).
+| File | Purpose |
+|------|---------|
+| `workspace/SOUL.md` | Your persona, practices, and boundaries |
+| `workspace/MEMORY.md` | Accumulated decisions and context — read at session start |
+| `workspace/AGENTS.md` | Detailed environment, tools, services, and workflows |
 
-   Add `--docker` for Docker-in-Docker access.
+## Quick Reference
 
-   If the agent needs additional services (e.g., PostgreSQL), check `.openharness/config.json` for `composeOverrides` and include them when starting:
-   ```bash
-   docker compose -f docker/docker-compose.yml -f docker/docker-compose.nextjs.yml -p <agent-name> up -d
-   ```
-3. Enter and start the agent:
-   ```bash
-   openharness shell <agent-name>
-   claude                                    # or codex, pi
-   ```
+| Resource | Value |
+|----------|-------|
+| Dev server | `npm run dev` (port 3000, binds `0.0.0.0`) |
+| Public URL | `https://next-postgres-shadcn.ruska.dev` |
+| Database | PostgreSQL 16 — `sandbox:sandbox@postgres:5432/sandbox` |
+| Prisma schema | `workspace/next-app/prisma/schema.prisma` |
+| UI components | `workspace/next-app/src/components/ui/` (shadcn) |
+| Tests | `npm test` (Vitest) / `npm run test:e2e` (Playwright) |
+| Tunnel start | `cloudflared tunnel --config ~/.cloudflared/config-next-postgres-shadcn.yml run next-postgres-shadcn` |
 
-### Validate
+## Project Structure
 
-Verify a sandbox is healthy.
+```
+workspace/
+  next-app/             # Next.js project
+    src/app/            # App Router routes
+    src/components/     # React components (ui/ for shadcn)
+    src/lib/            # Utilities
+    prisma/             # Database schema & migrations
+  .claude/skills/       # /prd, /ralph, /quality-gate, /strategy-review
+  .ralph/               # Autonomous agent loop (PRD → implement → validate)
+  heartbeats/           # Periodic task definitions
+  memory/               # Daily append-only logs
+  SOUL.md / MEMORY.md   # Identity and context
+```
 
-1. **Check running sandboxes**:
-   ```bash
-   openharness list
-   ```
-2. **Verify workspace** (inside the sandbox via `openharness shell <agent-name>`):
-   - `AGENTS.md`, `SOUL.md`, `MEMORY.md` exist in workspace
-   - Target agent CLI is installed (`claude --version`, `codex --version`, `pi --version`)
-   - Docker socket accessible if needed (`docker ps`)
-3. **Check heartbeat** (if configured):
-   ```bash
-   openharness heartbeat status <agent-name>
-   ```
+## Infrastructure (do not modify)
 
-### Teardown
-
-Remove an agent sandbox. Preserve work first if needed.
-
-1. **Save unmerged work** (if the agent branch has uncommitted changes):
-   ```bash
-   cd .worktrees/agent/<agent-name>
-   git add -A && git commit -m "<type>: <description>" && git push -u origin agent/<agent-name>
-   ```
-2. **Stop the sandbox**:
-   ```bash
-   openharness stop <agent-name>
-   ```
-3. **Full cleanup** (removes container, image, and worktree):
-   ```bash
-   openharness clean <agent-name>
-   ```
+| Directory | Purpose |
+|-----------|---------|
+| `docker/` | Dockerfile + compose files (base + nextjs overlay for PostgreSQL + port 3000) |
+| `install/` | Provisioning scripts (setup.sh, heartbeat.sh, cloudflared-tunnel.sh) |
+| `.openharness/` | Compose overrides config (`config.json`) |
+| `.devcontainer/` | Optional VS Code Dev Container |
 
 ## Git Workflow
 
 | Item | Convention |
 |------|-----------|
-| Base branch | `main` |
-| Agent branches | `agent/<agent-name>` |
+| Branch | `agent/next-postgres-shadcn` |
 | PR target | `development` |
 | Commit format | `<type>: <description>` (`feat`, `fix`, `task`, `audit`, `skill`) |
-
-## What You Do
-
-- Commit and push changes to the harness itself (docker/, install/, workspace/ templates)
-- Manage branches and worktree state via git
-- Review diffs across agent branches
-- Provision, validate, and tear down sandboxes (`openharness quickstart`, `openharness clean`, `docker exec`, etc.)
-- Create and manage GitHub issues for agent tracking
-- Run the `/provision` skill for end-to-end sandbox setup
-- **Scaffold agent workspaces** after provisioning -- write SOUL.md, MEMORY.md, skills, heartbeats, and initial project state to `.worktrees/agent/<name>/workspace/` based on the agent's role. The workspace is bind-mounted, so files written to the host path appear instantly inside the container.
-
-## What You Do NOT Do
-
-- Write application code logic (business logic, APIs, UIs -- that happens inside sandboxes)
-- Enter sandboxes to do ongoing agent work
-- Modify agent-owned files after initial scaffolding (agents own their workspace once running)
-
-> **Scaffolding vs. application code**: Writing SOUL.md, MEMORY.md, skill definitions, heartbeat configs, and initial state files is orchestrator infrastructure work -- it configures the agent's identity, capabilities, and schedule. The agent then owns these files and evolves them. Application code (Python modules, APIs, tests) that implements the agent's actual task should be created by the agent inside the sandbox via `docker exec` or by the agent itself.
-
-## Project Structure
-
-```
-.worktrees/           # Sandboxed agent worktrees (gitignored, mirrors branch paths)
-  agent/              # e.g., .worktrees/agent/zoho-crm -> branch agent/zoho-crm
-docker/               # Dockerfile and compose files
-  docker-compose.yml           # Base sandbox service
-  docker-compose.nextjs.yml    # Override: PostgreSQL + port 3000
-  docker-compose.docker.yml    # Override: Docker-in-Docker
-install/              # Provisioning scripts (setup.sh, heartbeat.sh, entrypoint.sh, cloudflared-tunnel.sh)
-workspace/            # Template for all agent workspaces
-  AGENTS.md           # In-sandbox agent instructions (separate from this file)
-  SOUL.md             # Agent persona template
-  MEMORY.md           # Long-term memory template
-  heartbeats.conf     # Periodic task schedule
-  .claude/skills/     # Reusable skill templates
-    quality-gate/     # Template: validate decisions before execution
-    strategy-review/  # Template: measure decision quality over time
-.openharness/         # Harness config (banner, compose overrides)
-  config.json         # composeOverrides array for stack-specific services
-cli/                  # openharness CLI (sandbox orchestration)
-packages/sandbox/     # @openharness/sandbox (Docker + worktree tools)
-.github/ISSUE_TEMPLATE/  # agent, audit, bug, feature, skill, task
-.claude/skills/          # Orchestrator skills (e.g., /provision)
-```
