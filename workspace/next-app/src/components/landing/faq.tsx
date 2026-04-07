@@ -16,7 +16,7 @@ const faqs = [
   {
     question: "What problem does this harness solve?",
     answer:
-      "The gap between \"agent can write code\" and \"agent can ship a full-stack web feature end-to-end.\" Agents need a real database, real UI components, a real deployment URL, and a scaffolded workspace with identity, skills, and memory configured for their task. This harness provides all of that out of the box.",
+      'The gap between "agent can write code" and "agent can ship a full-stack web feature end-to-end." Agents need a real database, real UI components, a real deployment URL, and a scaffolded workspace with identity, skills, and memory configured for their task. This harness provides all of that out of the box.',
   },
   {
     question: "How is this different from a plain Docker container?",

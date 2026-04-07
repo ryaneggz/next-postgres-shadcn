@@ -11,8 +11,7 @@ export function Hero() {
         Built on Open Harness
       </p>
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        Give your AI agents{" "}
-        <span className="text-muted-foreground">a real dev environment</span>
+        Give your AI agents <span className="text-muted-foreground">a real dev environment</span>
       </h1>
       <p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
         This harness gives AI coding agents an isolated, fully-wired Next.js + PostgreSQL +
