@@ -29,7 +29,7 @@ npm run setup
 2. **Provision** the sandbox (includes PostgreSQL + port 3000):
 
 ```bash
-openharness quickstart next-postgres-shadcn --base-branch development
+openharness quickstart next-postgres-shadcn --base-branch agent/next-postgres-shadcn
 ```
 
 > **Note:** This agent requires compose overrides for PostgreSQL and port mapping. After quickstart creates the worktree, start services with both compose files:
