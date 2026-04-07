@@ -19,37 +19,27 @@ A fully-provisioned Next.js + PostgreSQL + shadcn/ui development environment run
 
 ## Quick Start
 
-1. **Clone and install** the Open Harness CLI:
-
 ```bash
-git clone https://github.com/ryaneggz/open-harness.git && cd open-harness
+# Clone the harness
+git clone -b agent/next-postgres-shadcn \
+  https://github.com/ryaneggz/open-harness.git \
+  next-postgres-shadcn
+cd next-postgres-shadcn
+
+# Install the CLI
 npm run setup
-```
 
-2. **Provision** the sandbox (includes PostgreSQL + port 3000):
-
-```bash
-openharness quickstart next-postgres-shadcn --base-branch agent/next-postgres-shadcn
-```
-
-> **Note:** This agent requires compose overrides for PostgreSQL and port mapping. After quickstart creates the worktree, start services with both compose files:
-> ```bash
-> WTREE=".worktrees/agent/next-postgres-shadcn"
-> NAME=next-postgres-shadcn HARNESS_ROOT="$(realpath $WTREE)" HOST_WORKSPACE="$(realpath $WTREE)" \
->   docker compose -f "$WTREE/docker/docker-compose.yml" -f "$WTREE/docker/docker-compose.nextjs.yml" \
->   -p next-postgres-shadcn up -d
-> ```
-
-3. **Enter and start working:**
-
-```bash
-openharness shell next-postgres-shadcn
-cd workspace/next-app
-npm install && npm run dev            # Dev server on 0.0.0.0:3000
-claude                                # start the AI agent
+# Provision — the agent handles everything
+claude --permission-mode plan -p "Provision this harness"
 ```
 
 > **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Node.js](https://nodejs.org/) (v20+).
+
+The agent will:
+1. Build the Docker image and start PostgreSQL + sandbox container
+2. Generate an SSH key — gives you the public key to add to GitHub
+3. Pause for auth: `cloudflared login`, `gh auth login`
+4. After you confirm, configure the tunnel and start the dev server
 
 ### Dev Container (Optional)
 
