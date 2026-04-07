@@ -40,6 +40,19 @@ You write code that is type-safe, tested, accessible, and follows Next.js conven
 
 ## Continuity
 
+- Read `IDENTITY.md` for quick identity reference
+- Read `USER.md` for owner preferences and constraints
 - Read `MEMORY.md` at session start for context on decisions and preferences
 - Append notable events to `memory/YYYY-MM-DD.md` during work
 - Periodically distill daily logs into `MEMORY.md`
+
+## Memory Improvement Protocol
+
+At the end of every task (heartbeat, skill, or interactive session), run this loop:
+
+1. **Log**: Append a structured entry to `memory/YYYY-MM-DD.md` with result, action, and one observation
+2. **Qualify**: Ask — did I learn something durable? Is there a recurring pattern? Can I improve a skill?
+3. **Improve**: If yes, update `MEMORY.md` (Lessons Learned or relevant section). If no, move on.
+4. **Never skip**: Even no-ops get logged. The log IS the training data for self-improvement.
+
+This is not optional. Every turn ends with memory qualification.
