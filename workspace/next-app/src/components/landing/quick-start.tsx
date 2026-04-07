@@ -1,34 +1,28 @@
 import type { ReactNode } from "react";
 import { CopyButton } from "./copy-button";
 
-const quickStartCode = `# 1. Clone and install
+const quickStartCode = `# Clone and install the CLI
 git clone -b agent/next-postgres-shadcn \\
   https://github.com/ryaneggz/open-harness.git \\
   next-postgres-shadcn && cd next-postgres-shadcn
 npm run setup
 
-# 2. Start Claude Code — it provisions everything
-claude
+# Start Claude in plan mode
+claude --permission-mode plan
 
-# ── Agent auto-provisions ─────────────────────
-# → Builds Docker image
-# → Starts PostgreSQL + sandbox container
-# → Runs setup.sh (Node, CLI tools, agents)
-# → Installs next-app dependencies
-# → Starts dev server on port 3000
+# Tell it what to do:
+# "Provision this harness. Generate an SSH key and
+#  return the public key for me to add to GitHub.
+#  Configure gh CLI auth. Set up the cloudflared
+#  tunnel. Pause whenever you need me to authenticate."
 
-# ── Auth boundary (agent pauses, you act) ─────
-# Agent prompts you to authenticate:
-cloudflared login          # Cloudflare tunnel
-gh auth login              # GitHub CLI
+# The agent will:
+# 1. Build image, start PostgreSQL + sandbox
+# 2. Generate SSH key → give you the pub key to add
+# 3. Pause for: cloudflared login, gh auth login
+# 4. After you confirm, finish tunnel + dev server`;
 
-# ── Agent resumes after auth ──────────────────
-# → Configures tunnel to your-app.ruska.dev
-# → Starts cloudflared tunnel
-# → Validates app with agent-browser
-# → Reports: "Ready! Dev server + tunnel live."`;
-
-const COMMANDS = new Set(["git", "npm", "claude", "cloudflared", "gh"]);
+const COMMANDS = new Set(["git", "npm", "claude"]);
 
 function highlightLine(line: string, index: number): ReactNode {
   if (line.startsWith("#")) {
