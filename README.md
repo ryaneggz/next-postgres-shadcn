@@ -1,19 +1,19 @@
-# next-postgres-shadcn — Full Stack Developer Agent
+# OpenHarness: Next + Postgres + shadcn
 
-Full Stack Developer agent building Next.js + TypeScript + PostgreSQL + shadcn/ui applications inside an isolated [Open Harness](https://github.com/ryaneggz/open-harness) sandbox.
+A fully-provisioned Next.js + PostgreSQL + shadcn/ui development environment running inside an isolated [Open Harness](https://github.com/ryaneggz/open-harness) Docker sandbox for AI coding agents.
 
-> **Spin up a fully-provisioned full-stack development environment with AI coding agents, PostgreSQL, and a public tunnel — either as an Open Harness sandbox or a standalone Dev Container.**
+**Live Demo:** [next-postgres-shadcn.ruska.dev](https://next-postgres-shadcn.ruska.dev)
 
 ## Stack
 
-- **Next.js 15+** (App Router, TypeScript strict, `src/` directory)
+- **Next.js 16** (App Router, TypeScript strict, Turbopack)
 - **PostgreSQL 16** (Docker Compose, isolated network)
-- **Prisma** ORM (schema-first, auto-generated types)
-- **shadcn/ui** + Tailwind CSS
-- **next-themes** (light / dark / system)
+- **Prisma 7** ORM (schema-first, auto-generated types)
+- **shadcn/ui** + Tailwind CSS v4
+- **next-themes** (dark mode default)
 - **next-pwa** (Progressive Web App)
-- **Cloudflared** tunnel (public URL at `next-postgres-shadcn.ruska.dev`)
-- **Ralph** (autonomous agent orchestrator)
+- **Cloudflared** tunnel → `next-postgres-shadcn.ruska.dev`
+- **Ralph** (autonomous agent loop)
 
 ---
 
