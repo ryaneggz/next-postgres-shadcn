@@ -25,7 +25,11 @@
 
 ## Lessons Learned
 
-<!-- Populated by the agent over time -->
+<!-- Populated by the agent over time via Memory Improvement Protocol -->
+
+## Triage History
+
+<!-- Populated by issue-triage skill. Track patterns: issue types, planner quality, recurring themes. -->
 
 ## Project Context
 
