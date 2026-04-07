@@ -1,4 +1,4 @@
-name: CI
+name: "CI: next-postgres-shadcn"
 
 on:
   push:
