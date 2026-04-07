@@ -1,3 +1,5 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import {
   Code2,
@@ -30,22 +32,28 @@ const stack: TechItem[] = [
   { name: "Playwright", icon: MonitorCheck },
 ];
 
-function MarqueeRow({ items, reverse }: { items: TechItem[]; reverse?: boolean }) {
-  const doubled = [...items, ...items];
+function TechBadge({ name, icon: Icon }: TechItem) {
+  return (
+    <div className="flex shrink-0 items-center gap-3 rounded-full border border-border/40 bg-card/50 px-5 py-2.5 backdrop-blur-sm">
+      <Icon className="h-5 w-5 text-muted-foreground" />
+      <span className="whitespace-nowrap text-sm font-medium">{name}</span>
+    </div>
+  );
+}
+
+function MarqueeTrack({ items, reverse }: { items: TechItem[]; reverse?: boolean }) {
+  const tripled = [...items, ...items, ...items];
+  const direction = reverse ? "animate-marquee-reverse" : "animate-marquee";
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="group relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent" />
       <div
-        className={`flex w-max gap-6 ${reverse ? "animate-marquee-reverse" : "animate-marquee"}`}
+        className={`flex w-max gap-4 py-1 ${direction} group-hover:[animation-play-state:paused]`}
       >
-        {doubled.map((tech, i) => (
-          <div
-            key={`${tech.name}-${i}`}
-            className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-4 py-2.5"
-          >
-            <tech.icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-            <span className="whitespace-nowrap text-sm font-medium">{tech.name}</span>
-          </div>
+        {tripled.map((tech, i) => (
+          <TechBadge key={`${tech.name}-${i}`} {...tech} />
         ))}
       </div>
     </div>
@@ -60,12 +68,12 @@ export function TechStack() {
   return (
     <section className="py-16">
       <h2 className="mb-2 text-center text-2xl font-bold tracking-tight sm:text-3xl">Tech Stack</h2>
-      <p className="mb-8 text-center text-muted-foreground">
+      <p className="mb-10 text-center text-muted-foreground">
         Production-grade tools, zero configuration.
       </p>
       <div className="flex flex-col gap-4">
-        <MarqueeRow items={row1} />
-        <MarqueeRow items={row2} reverse />
+        <MarqueeTrack items={row1} />
+        <MarqueeTrack items={row2} reverse />
       </div>
     </section>
   );
