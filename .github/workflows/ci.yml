@@ -4,6 +4,19 @@ on:
   push:
     branches:
       - agent/next-postgres-shadcn
+    paths:
+      - "workspace/next-app/src/**"
+      - "workspace/next-app/prisma/**"
+      - "workspace/next-app/public/**"
+      - "workspace/next-app/package.json"
+      - "workspace/next-app/package-lock.json"
+      - "workspace/next-app/tsconfig.json"
+      - "workspace/next-app/next.config.*"
+      - "workspace/next-app/tailwind.config.*"
+      - "workspace/next-app/postcss.config.*"
+      - "workspace/next-app/vitest.config.*"
+      - "workspace/next-app/playwright.config.*"
+      - ".github/workflows/ci.yml"
 
 permissions:
   contents: read
