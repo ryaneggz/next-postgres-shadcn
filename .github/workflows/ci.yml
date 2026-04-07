@@ -3,6 +3,7 @@ name: "CI: next-postgres-shadcn"
 on:
   push:
     branches:
+      - development
       - agent/next-postgres-shadcn
     paths:
       - "workspace/next-app/src/**"
