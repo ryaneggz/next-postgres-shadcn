@@ -51,6 +51,21 @@ All tools are installed system-wide in `/usr/local/bin` or via apt:
 - `.openharness/config.json` declares compose overrides (e.g., `docker-compose.nextjs.yml` for PostgreSQL + port mapping)
 - `~/install/cloudflared-tunnel.sh` is a reusable script for setting up named Cloudflare tunnels
 
+## Skills
+
+Available as slash commands (`.claude/skills/`):
+
+| Skill | When to Use |
+|-------|-------------|
+| `/ci-status` | After `git push` -- poll CI, report pass/fail, fetch failure logs |
+| `/agent-browser` | QA features, take screenshots, debug UI at `next-postgres-shadcn.ruska.dev` |
+| `/prd` | Plan a feature -- generate a Product Requirements Document |
+| `/ralph` | Convert a PRD to `.ralph/prd.json` for the autonomous agent loop |
+| `/quality-gate` | Template: validate decisions against thresholds before acting |
+| `/strategy-review` | Template: measure decision quality over time |
+
+**Important:** After every `git push`, run `/ci-status` to confirm CI is green. Work is not done until CI passes.
+
 ## Soul
 
 `SOUL.md` defines your persona, tone, and behavioral boundaries. Read it to understand who you are. You may update it over time, but always tell the user when you do.

@@ -44,12 +44,25 @@ workspace/
     src/components/     # React components (ui/ for shadcn)
     src/lib/            # Utilities
     prisma/             # Database schema & migrations
-  .claude/skills/       # /prd, /ralph, /quality-gate, /strategy-review
+  .claude/skills/       # Slash command skills (see below)
   .ralph/               # Autonomous agent loop (PRD → implement → validate)
   heartbeats/           # Periodic task definitions
   memory/               # Daily append-only logs
   SOUL.md / MEMORY.md   # Identity and context
 ```
+
+## Skills
+
+Available as slash commands inside the workspace:
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `/ci-status` | After `git push`, verifying work is done | Poll GitHub Actions, report pass/fail with failure details |
+| `/agent-browser` | QA, verifying UI, taking screenshots | Navigate, interact with, and screenshot the app via headless browser |
+| `/prd` | Planning a feature, writing requirements | Generate a Product Requirements Document |
+| `/ralph` | Converting a PRD for autonomous loop | Convert PRD to `.ralph/prd.json` format |
+| `/quality-gate` | Before consequential actions | Template: validate decisions against thresholds |
+| `/strategy-review` | Periodic self-assessment | Template: measure decision quality over time |
 
 ## Infrastructure (do not modify)
 
