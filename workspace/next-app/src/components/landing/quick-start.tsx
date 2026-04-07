@@ -1,24 +1,102 @@
+import type { ReactNode } from "react";
 import { CopyButton } from "./copy-button";
 
-const quickStartCode = `# Clone the Next + Postgres + shadcn harness
+const quickStartCode = `# 1. Clone the harness and install the CLI
 git clone -b agent/next-postgres-shadcn \\
   https://github.com/ryaneggz/open-harness.git \\
   next-postgres-shadcn && cd next-postgres-shadcn
-
-# Install the OpenHarness CLI
 npm run setup
 
-# Start PostgreSQL + sandbox container
-docker compose \\
-  -f docker/docker-compose.yml \\
+# 2. Build, start PostgreSQL + sandbox, run setup
+docker build -f docker/Dockerfile -t next-postgres-shadcn .
+docker compose -f docker/docker-compose.yml \\
   -f docker/docker-compose.nextjs.yml \\
   -p next-postgres-shadcn up -d
+docker exec --user root next-postgres-shadcn \\
+  bash -c "chmod +x /home/sandbox/install/*.sh \\
+  && bash /home/sandbox/install/setup.sh --non-interactive"
 
-# Enter the sandbox and start developing
+# 3. Enter sandbox and install app deps
 openharness shell next-postgres-shadcn
-cd workspace/next-app && npm install && npm run dev`;
+cd workspace/next-app && npm install && npm run dev
+
+# ── Auth boundary (manual, one-time) ──────────
+# Cloudflare tunnel (exposes app publicly):
+cloudflared login
+~/install/cloudflared-tunnel.sh \\
+  next-postgres-shadcn next-postgres-shadcn.ruska.dev 3000
+
+# GitHub CLI:
+gh auth login
+
+# ── Resume ────────────────────────────────────
+# Start the tunnel + dev server:
+cloudflared tunnel --config \\
+  ~/.cloudflared/config-next-postgres-shadcn.yml \\
+  run next-postgres-shadcn
+npm run dev`;
+
+const COMMANDS = new Set(["git", "npm", "docker", "openharness", "cd"]);
+
+function highlightLine(line: string, index: number): ReactNode {
+  if (line.startsWith("#")) {
+    return (
+      <span key={index} className="text-muted-foreground/60 italic">
+        {line}
+      </span>
+    );
+  }
+
+  const tokens = line.split(/(\s+)/);
+  let commandFound = false;
+
+  return (
+    <span key={index}>
+      {tokens.map((token, i) => {
+        if (/^\s+$/.test(token)) return token;
+
+        if (!commandFound && COMMANDS.has(token)) {
+          commandFound = true;
+          return (
+            <span key={i} className="font-semibold text-foreground">
+              {token}
+            </span>
+          );
+        }
+
+        if (token.startsWith("-")) {
+          return (
+            <span key={i} className="text-chart-1">
+              {token}
+            </span>
+          );
+        }
+
+        if (token === "&&" || token === "\\\\") {
+          return (
+            <span key={i} className="text-muted-foreground">
+              {token}
+            </span>
+          );
+        }
+
+        if (token.includes("/") || token.includes(".") || token.startsWith("https:")) {
+          return (
+            <span key={i} className="text-chart-2">
+              {token}
+            </span>
+          );
+        }
+
+        return token;
+      })}
+    </span>
+  );
+}
 
 export function QuickStart() {
+  const lines = quickStartCode.split("\n");
+
   return (
     <section className="mx-auto max-w-5xl px-4 py-16">
       <h2 className="mb-2 text-center text-2xl font-bold tracking-tight sm:text-3xl">
@@ -36,7 +114,14 @@ export function QuickStart() {
         </div>
         <CopyButton text={quickStartCode} />
         <pre className="overflow-x-auto p-4 text-sm leading-relaxed">
-          <code>{quickStartCode}</code>
+          <code>
+            {lines.map((line, i) => (
+              <span key={i}>
+                {highlightLine(line, i)}
+                {i < lines.length - 1 ? "\n" : ""}
+              </span>
+            ))}
+          </code>
         </pre>
       </div>
     </section>
