@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   description:
     "A fully-provisioned Next.js + PostgreSQL + shadcn/ui development environment running inside an isolated Docker sandbox for AI coding agents.",
   manifest: "/manifest.json",
-  themeColor: "#000000",
 };
 
 export default function RootLayout({

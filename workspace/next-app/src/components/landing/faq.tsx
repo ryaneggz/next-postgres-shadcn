@@ -50,8 +50,8 @@ export function FAQ(): React.JSX.Element {
         Why this harness exists and what it does for your agents.
       </p>
       <Accordion>
-        {faqs.map((faq, i) => (
-          <AccordionItem key={i} value={String(i)}>
+        {faqs.map((faq) => (
+          <AccordionItem key={faq.question} value={faq.question}>
             <AccordionTrigger>{faq.question}</AccordionTrigger>
             <AccordionContent>
               <p className="text-muted-foreground">{faq.answer}</p>
