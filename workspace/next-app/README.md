@@ -11,20 +11,17 @@ A fully-provisioned Next.js + PostgreSQL + shadcn/ui harness for AI coding agent
 git clone https://github.com/ryaneggz/next-postgres-shadcn.git
 cd next-postgres-shadcn
 
-# Install the CLI
-npm run setup
-
 # Provision — the agent handles everything
-claude --permission-mode plan -p "Provision this harness"
+claude "/provision"
 ```
 
 > **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Node.js](https://nodejs.org/) (v20+).
 
 The agent will:
-1. Build the Docker image and start PostgreSQL + sandbox container
-2. Generate an SSH key — gives you the public key to add to GitHub
-3. Pause for auth: `cloudflared login`, `gh auth login`
-4. After you confirm, configure the tunnel and start the dev server
+1. Build the Docker image with Node.js 22, agent CLIs, and dev tools
+2. Start PostgreSQL + sandbox container with compose overlays
+3. Install dependencies, generate Prisma client, and run migrations
+4. Launch dev server + Cloudflare tunnel, then run test:setup to validate
 
 ## Stack
 
