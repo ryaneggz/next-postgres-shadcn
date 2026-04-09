@@ -19,6 +19,7 @@
 <!-- Populated by the agent over time via Memory Improvement Protocol -->
 
 - **gh auth resolved** (2026-04-08 07:00 UTC): gh CLI auth blocker from 2026-04-07 is now resolved. First successful issue triage query at 07:00 UTC after 5 consecutive skips. Provisioning now includes GH_TOKEN.
+- **Ralph archive fix** (2026-04-08): ralph.sh only archived on branch change, never on completion. Fixed: archive on COMPLETE signal and max-iteration exit. Also fixed prd.json US-FINAL path format (singular→plural, merged→separate dirs). Always verify `.ralph/archives/` after Ralph runs.
 
 ## Triage History
 
