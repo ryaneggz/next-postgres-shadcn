@@ -10,11 +10,7 @@ const DB_PORT = Number(process.env.PGPORT || 5432);
 const DEV_URL = "http://localhost:3000";
 const PUBLIC_URL = "https://next-postgres-shadcn.ruska.dev";
 
-function tcpConnect(
-  host: string,
-  port: number,
-  timeoutMs = 5000,
-): Promise<boolean> {
+function tcpConnect(host: string, port: number, timeoutMs = 5000): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     const timer = setTimeout(() => {
@@ -33,10 +29,7 @@ function tcpConnect(
   });
 }
 
-async function httpOk(
-  url: string,
-  timeoutMs = 10000,
-): Promise<{ ok: boolean; status: number }> {
+async function httpOk(url: string, timeoutMs = 10000): Promise<{ ok: boolean; status: number }> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),

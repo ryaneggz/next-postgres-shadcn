@@ -45,7 +45,10 @@ export function validatePrdHasFinalStory(prd: {
   }
 
   if (!criteria.includes("closes")) {
-    return { valid: false, error: "US-FINAL must include 'Closes #N' for auto-closing the issue on merge" };
+    return {
+      valid: false,
+      error: "US-FINAL must include 'Closes #N' for auto-closing the issue on merge",
+    };
   }
 
   if (!criteria.includes("roadmap context") && !criteria.includes("roadmap")) {
@@ -77,6 +80,31 @@ export function validateUiStoriesHaveBrowserQa(
   }
 
   return { valid: missingQa.length === 0, missingQa };
+}
+
+/**
+ * Validates that the archive path in US-FINAL uses the correct format:
+ * .ralph/archives/YYYY-MM-DD/<feature>/ (plural archives, date and feature as separate dirs)
+ */
+export function validateArchivePath(stories: Array<{ acceptanceCriteria: string[] }>): {
+  valid: boolean;
+  error?: string;
+} {
+  for (const story of stories) {
+    const criteria = story.acceptanceCriteria.join(" ");
+    // Check for the OLD incorrect patterns
+    if (criteria.includes(".ralph/archive/") && !criteria.includes(".ralph/archives/")) {
+      return { valid: false, error: "Archive path uses singular 'archive' — must be 'archives'" };
+    }
+    if (/archives\/\d{4}-\d{2}-\d{2}-/.test(criteria)) {
+      return {
+        valid: false,
+        error:
+          "Archive path uses YYYY-MM-DD-<feature> — must be YYYY-MM-DD/<feature>/ (separate dirs)",
+      };
+    }
+  }
+  return { valid: true };
 }
 
 /**
