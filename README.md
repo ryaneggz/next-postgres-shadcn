@@ -79,18 +79,23 @@ ssh orchestrator@localhost -p 2222   # password: test1234
 ├── packages/sandbox/             # @openharness/sandbox tools
 └── workspace/                    # Agent harness (persisted via bind mount)
     ├── next-app/                 # Next.js project
-    │   ├── src/app/              # App Router routes
-    │   ├── src/components/       # React components (ui/ for shadcn)
-    │   ├── src/lib/              # Utilities
+    │   ├── src/app/              # App Router routes (/, /roadmap)
+    │   ├── src/components/       # React components (ui/, landing/, roadmap/)
+    │   ├── src/data/             # Typed data (roadmap.ts)
+    │   ├── src/lib/              # Utilities + guard helpers
+    │   ├── src/test/             # Vitest tests (35 tests)
     │   ├── prisma/               # Database schema & migrations
     │   └── public/               # Static assets + PWA manifest
-    ├── .claude/                  # Agent config, skills, agents
-    ├── .ralph/                   # Ralph autonomous loop (PRD, progress, prompts)
-    ├── heartbeats/               # Periodic task definitions
+    ├── .claude/                  # Agent config
+    │   ├── skills/               # 12 skills (slash commands)
+    │   ├── agents/               # 11 sub-agents (experts, council, critic)
+    │   └── rules/                # Coding standards
+    ├── .ralph/                   # Ralph autonomous loop (PRD, progress, archive)
+    ├── heartbeats/               # 5 periodic task definitions
     ├── memory/                   # Daily append-only logs
     ├── SOUL.md                   # Agent persona & boundaries
     ├── MEMORY.md                 # Curated long-term memory
-    └── heartbeats.conf           # Heartbeat schedule config
+    └── heartbeats.conf           # Heartbeat schedule config (5 entries)
 ```
 
 ---
@@ -178,6 +183,10 @@ npm run type-check                                    # tsc --noEmit
 | CI pipeline | automatic | On every `git push` (GitHub Actions) |
 | QA | agent-browser | Navigate to `https://next-postgres-shadcn.ruska.dev` |
 | Build health | heartbeat | Every 30 min during 9am–9pm |
+| Issue triage | heartbeat | Hourly, 24/7 |
+| Nightly release | heartbeat | Daily 23:50 UTC |
+| Backlog ranking | heartbeat | Daily 08:00 UTC |
+| Implementer | heartbeat | Every 2h during 9am–9pm |
 
 ---
 
@@ -203,6 +212,54 @@ Workspace-level skills run inside the sandbox container:
 | `/prd` | Generate a Product Requirements Document for a new feature |
 | `/ralph` | Convert a PRD to `.ralph/prd.json` for the autonomous agent loop |
 | `/issue-triage` | Triage unassigned GitHub issues with parallel sub-agents + AI council |
+| `/backlog-rank` | Rank open issues by PM criteria, update pinned backlog tracking issue |
+| `/strategic-proposal` | Spawn 5 domain experts + AI council + critic for signal-validated product roadmap |
+| `/implement` | Pick top validated roadmap item, run Ralph loop in tmux, submit draft PR with CI green |
+| `/quality-gate` | Template: validate decisions against thresholds before acting |
+| `/strategy-review` | Template: measure decision quality over time |
+
+---
+
+## 🗺️ Product Roadmap
+
+**Vision:** Document [Open Harness](https://github.com/ryaneggz/open-harness), let users promote their forks, and ultimately enable users to curate their own Docker registries with monthly licensing.
+
+**Core principle: Signal over features.** We build what users demonstrably want. Items require evidence of demand (GitHub reactions, comments, fork activity) before entering the build queue. Infrastructure prerequisites (auth, security) are exempt.
+
+**Live roadmap:** [next-postgres-shadcn.ruska.dev/roadmap](https://next-postgres-shadcn.ruska.dev/roadmap) | [Pinned GitHub issue](https://github.com/ryaneggz/next-postgres-shadcn/issues?q=label%3Aroadmap+is%3Aopen)
+
+### Phases
+
+| Phase | Label | Criteria |
+|-------|-------|----------|
+| **Now** | Building Now | Has signal + dependencies met + complexity ≤ M, OR infrastructure prerequisite |
+| **Next** | Up Next | Has signal but dependencies not met, OR complexity L with signal |
+| **Later** | On the Horizon | No signal, speculative, or blocked by multiple prerequisites |
+
+### Item Properties
+
+Each roadmap item tracks these properties (consistent across the pinned issue, `/roadmap` page, and `src/data/roadmap.ts`):
+
+| Property | Values | Purpose |
+|----------|--------|---------|
+| **Rank** | 1–N | Priority order within phase |
+| **Category** | `product` · `docs` · `security` · `registry` · `agent` | Domain area |
+| **Phase** | `now` · `next` · `later` | Build priority (see above) |
+| **Complexity** | `S` · `M` · `L` | Estimated effort |
+| **Signal** | Evidence string, `"infrastructure"`, or `"none"` | Demand validation |
+
+### How It Works
+
+1. **`/strategic-proposal`** — 5 domain experts (product, docs, security, registry, agent systems) propose roadmap items in parallel
+2. **Strategic Council** (opus) drafts a prioritized roadmap, scoring each item on signal, feasibility, dependencies, and alignment
+3. **Strategic Critic** challenges the draft — verifies signal claims, questions phase assignments, identifies dependency gaps
+4. **Council finalizes** — incorporates valid criticisms, produces the ranked roadmap
+5. **Pinned issue + `/roadmap` page** are updated with the result
+6. **`/implement` heartbeat** (every 2h) picks the top validated "Now" item, generates a Ralph PRD, and runs the implementation loop
+
+### How to Influence the Roadmap
+
+React with 👍 on [GitHub issues](https://github.com/ryaneggz/next-postgres-shadcn/issues) to signal demand. Items with the most community votes get built first. The implementer heartbeat only picks items with validated signal — unvoted features stay in "Later."
 
 ---
 

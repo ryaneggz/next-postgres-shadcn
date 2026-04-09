@@ -1,7 +1,12 @@
 # Workspace Maintenance
 
 This file defines meta-maintenance routines for the workspace itself.
-Technical heartbeats (build health, issue triage) live in `heartbeats/` with `heartbeats.conf`.
+Technical heartbeats live in `heartbeats/` with `heartbeats.conf`:
+- **Build health** (every 30m, 9am-9pm) — lint, type-check, build, test, DB
+- **Issue triage** (hourly, 24/7) — assign unassigned issues, sub-agent plans, draft PRs
+- **Nightly release** (daily 23:50 UTC) — CalVer release if new commits since last tag
+- **Backlog ranking** (daily 08:00 UTC) — PM curation of top-10 issues
+- **Implementer** (every 2h, 9am-9pm) — pick validated roadmap item, Ralph loop in tmux
 
 ## Periodic Workspace Audit
 
