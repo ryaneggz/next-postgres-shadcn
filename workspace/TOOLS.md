@@ -79,7 +79,7 @@ Works through a PRD, implementing user stories one at a time in a loop.
 | `.ralph/progress.txt` | Append-only log + Codebase Patterns section |
 | `.ralph/prompt.md` | Agent instructions per iteration (amp) |
 | `.ralph/CLAUDE.md` | Agent instructions per iteration (claude) |
-| `.ralph/archive/` | Archived prd.json + progress.txt from completed runs |
+| `.ralph/archives/` | Archived prd.json + progress.txt from completed runs (YYYY-MM-DD/feature/) |
 
 **Triggered by `/implement` skill**: The implementer heartbeat picks the top validated roadmap item, generates a PRD via `/prd`, converts to prd.json via `/ralph`, injects execution rules (1:1 story iterations, browser QA, US-FINAL with draft PR + CI green), and launches `ralph.sh` in a tmux session.
 

@@ -244,7 +244,7 @@ Log `[implement] OP: Launched Ralph in tmux for issue #<N> "<title>"`.
 | Ralph script | `.ralph/ralph.sh` |
 | Ralph instructions | `.ralph/CLAUDE.md` |
 | Ralph PRD | `.ralph/prd.json` |
-| Ralph archive | `.ralph/archive/` |
+| Ralph archives | `.ralph/archives/` |
 | PRD skill | `.claude/skills/prd/SKILL.md` |
 | Ralph converter | `.claude/skills/ralph/SKILL.md` |
 | CI status | `.claude/skills/ci-status/SKILL.md` |
