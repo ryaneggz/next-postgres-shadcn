@@ -12,6 +12,7 @@
 8. Never skip pre-commit hooks (`--no-verify`)
 9. Memory protocol runs at the end of every task (see below)
 10. `CLAUDE.md` and `AGENTS.md` are symlinked — editing either updates both
+11. Run `/diagnose` at the end of every session to verify the stack is healthy (dev server, tunnel, DB, public URL)
 
 ## File Responsibilities
 
