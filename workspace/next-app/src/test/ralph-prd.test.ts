@@ -35,10 +35,7 @@ describe("Ralph PRD validation", () => {
   const validBackendStory = {
     id: "US-001",
     title: "Add user model to database",
-    acceptanceCriteria: [
-      "Prisma migration runs successfully",
-      "Typecheck passes",
-    ],
+    acceptanceCriteria: ["Prisma migration runs successfully", "Typecheck passes"],
     priority: 1,
   };
 
@@ -58,10 +55,7 @@ describe("Ralph PRD validation", () => {
 
     it("fails when last story is not US-FINAL", () => {
       const result = validatePrdHasFinalStory({
-        userStories: [
-          validBackendStory,
-          { ...validUiStory, priority: 999 },
-        ],
+        userStories: [validBackendStory, { ...validUiStory, priority: 999 }],
       });
       expect(result.valid).toBe(false);
       expect(result.error).toContain("US-FINAL");
@@ -73,10 +67,7 @@ describe("Ralph PRD validation", () => {
           validBackendStory,
           {
             ...validFinalStory,
-            acceptanceCriteria: [
-              "Create draft PR",
-              "CI must be GREEN",
-            ],
+            acceptanceCriteria: ["Create draft PR", "CI must be GREEN"],
           },
         ],
       });
@@ -90,10 +81,7 @@ describe("Ralph PRD validation", () => {
           validBackendStory,
           {
             ...validFinalStory,
-            acceptanceCriteria: [
-              "Archive .ralph/prd.json",
-              "Create draft PR",
-            ],
+            acceptanceCriteria: ["Archive .ralph/prd.json", "Create draft PR"],
           },
         ],
       });
@@ -126,11 +114,7 @@ describe("Ralph PRD validation", () => {
           validBackendStory,
           {
             ...validFinalStory,
-            acceptanceCriteria: [
-              "Archive .ralph/prd.json",
-              "Closes #42",
-              "CI must be GREEN",
-            ],
+            acceptanceCriteria: ["Archive .ralph/prd.json", "Closes #42", "CI must be GREEN"],
           },
         ],
       });
@@ -194,9 +178,7 @@ describe("Ralph PRD validation", () => {
     it("passes with correct archive path format", () => {
       const result = validateArchivePath([
         {
-          acceptanceCriteria: [
-            "Archive to .ralph/archives/2026-04-09/api-health/",
-          ],
+          acceptanceCriteria: ["Archive to .ralph/archives/2026-04-09/api-health/"],
         },
       ]);
       expect(result.valid).toBe(true);
@@ -205,9 +187,7 @@ describe("Ralph PRD validation", () => {
     it("fails with singular 'archive' instead of 'archives'", () => {
       const result = validateArchivePath([
         {
-          acceptanceCriteria: [
-            "Archive to .ralph/archive/2026-04-09/api-health/",
-          ],
+          acceptanceCriteria: ["Archive to .ralph/archive/2026-04-09/api-health/"],
         },
       ]);
       expect(result.valid).toBe(false);
@@ -217,9 +197,7 @@ describe("Ralph PRD validation", () => {
     it("fails with date-feature joined by hyphen instead of separate dirs", () => {
       const result = validateArchivePath([
         {
-          acceptanceCriteria: [
-            "Archive to .ralph/archives/2026-04-09-api-health/",
-          ],
+          acceptanceCriteria: ["Archive to .ralph/archives/2026-04-09-api-health/"],
         },
       ]);
       expect(result.valid).toBe(false);
@@ -227,9 +205,7 @@ describe("Ralph PRD validation", () => {
     });
 
     it("passes when no archive path is mentioned", () => {
-      const result = validateArchivePath([
-        { acceptanceCriteria: ["Typecheck passes"] },
-      ]);
+      const result = validateArchivePath([{ acceptanceCriteria: ["Typecheck passes"] }]);
       expect(result.valid).toBe(true);
     });
   });
