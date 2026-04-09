@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates cron curl wget sudo gosu gnupg procps \
+ && apt-get install -y --no-install-recommends ca-certificates cron curl wget sudo gosu gnupg jq procps \
  && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=America/Denver

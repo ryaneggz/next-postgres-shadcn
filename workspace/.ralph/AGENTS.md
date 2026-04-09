@@ -119,7 +119,7 @@ Before marking US-FINAL as `passes: true`, you MUST verify ALL of these:
 1. `npm run build` succeeds from `workspace/next-app/` (full Next.js build, not just type-check)
 2. Dev server is running: `curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/` returns `200`. If not running, start with `npm run dev &` and wait for ready.
 3. Public URL: `curl -s -o /dev/null -w '%{http_code}' https://next-postgres-shadcn.ruska.dev/` returns `200`. If tunnel is down, this is a BLOCKER — do not mark passes: true.
-4. Archive exists: `ls .ralph/archives/YYYY-MM-DD/<feature>/prd.json` succeeds. If not, create the archive now: `mkdir -p .ralph/archives/$(date +%Y-%m-%d)/<feature> && cp prd.json progress.txt .ralph/archives/$(date +%Y-%m-%d)/<feature>/`
+4. Archive exists: `ls .ralph/archives/YYYY-MM-DD/<feature>/prd.json` succeeds. If not, create the archive now: `mkdir -p .ralph/archives/$(date +%Y-%m-%d)/<feature> && mv prd.json progress.txt .ralph/archives/$(date +%Y-%m-%d)/<feature>/`
 5. Run `/diagnose` (or `npm run test:setup`) to verify the full stack: deps, Prisma, DB, dev server, tunnel, public URL. All 8 checks must pass.
 
 If ANY of these fail, fix them before marking complete. Do NOT mark passes: true and move on.

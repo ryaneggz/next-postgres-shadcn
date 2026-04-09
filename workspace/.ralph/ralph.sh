@@ -53,10 +53,11 @@ if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
     
     echo "Archiving previous run: $LAST_BRANCH"
     mkdir -p "$ARCHIVE_FOLDER"
-    [ -f "$PRD_FILE" ] && cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
-    [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+    [ -f "$PRD_FILE" ] && mv "$PRD_FILE" "$ARCHIVE_FOLDER/"
+    [ -f "$PROGRESS_FILE" ] && mv "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+    [ -f "$LAST_BRANCH_FILE" ] && mv "$LAST_BRANCH_FILE" "$ARCHIVE_FOLDER/"
     echo "   Archived to: $ARCHIVE_FOLDER"
-    
+
     # Reset progress file for new run
     echo "# Ralph Progress Log" > "$PROGRESS_FILE"
     echo "Started: $(date)" >> "$PROGRESS_FILE"
@@ -100,6 +101,24 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
+
+    # Archive the completed run
+    if [ -f "$PRD_FILE" ]; then
+      CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+      if [ -n "$CURRENT_BRANCH" ]; then
+        DATE=$(date +%Y-%m-%d)
+        FOLDER_NAME=$(echo "$CURRENT_BRANCH" | sed 's|^feat/[0-9]*-||; s|^ralph/||')
+        ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE/$FOLDER_NAME"
+        if [ ! -f "$ARCHIVE_FOLDER/prd.json" ]; then
+          echo "Archiving completed run to: $ARCHIVE_FOLDER"
+          mkdir -p "$ARCHIVE_FOLDER"
+          mv "$PRD_FILE" "$ARCHIVE_FOLDER/"
+          [ -f "$PROGRESS_FILE" ] && mv "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+          [ -f "$LAST_BRANCH_FILE" ] && mv "$LAST_BRANCH_FILE" "$ARCHIVE_FOLDER/"
+        fi
+      fi
+    fi
+
     exit 0
   fi
   
@@ -110,4 +129,22 @@ done
 echo ""
 echo "Ralph reached max iterations ($MAX_ITERATIONS) without completing all tasks."
 echo "Check $PROGRESS_FILE for status."
+
+# Archive the incomplete run so artifacts aren't lost
+if [ -f "$PRD_FILE" ]; then
+  CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+  if [ -n "$CURRENT_BRANCH" ]; then
+    DATE=$(date +%Y-%m-%d)
+    FOLDER_NAME=$(echo "$CURRENT_BRANCH" | sed 's|^feat/[0-9]*-||; s|^ralph/||')
+    ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE/$FOLDER_NAME"
+    if [ ! -f "$ARCHIVE_FOLDER/prd.json" ]; then
+      echo "Archiving incomplete run to: $ARCHIVE_FOLDER"
+      mkdir -p "$ARCHIVE_FOLDER"
+      mv "$PRD_FILE" "$ARCHIVE_FOLDER/"
+      [ -f "$PROGRESS_FILE" ] && mv "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+      [ -f "$LAST_BRANCH_FILE" ] && mv "$LAST_BRANCH_FILE" "$ARCHIVE_FOLDER/"
+    fi
+  fi
+fi
+
 exit 1

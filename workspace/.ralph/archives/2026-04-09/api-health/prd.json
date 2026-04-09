@@ -58,7 +58,7 @@
             "description": "Archive the Ralph run, submit all work as a draft PR with review docs, and confirm CI passes.",
             "acceptanceCriteria": [
                 "All previous stories have passes: true",
-                "Archive .ralph/prd.json and .ralph/progress.txt to .ralph/archive/2026-04-09-api-health/",
+                "Archive .ralph/prd.json and .ralph/progress.txt to .ralph/archives/2026-04-09/api-health/ (plural archives, date and feature as SEPARATE directories)",
                 "Create feature branch: feat/4-api-health from agent/next-postgres-shadcn",
                 "Push all commits to the feature branch",
                 "Create draft PR to development with body containing: Closes #4 on its own line, ## Roadmap Context (Rank: 1, Category: product, Phase: now, Complexity: S, Signal: infrastructure), ## What, ## Why, ## How, ## Manual Review Steps, ## Acceptance Criteria",
