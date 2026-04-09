@@ -18,7 +18,7 @@ export async function GET(): Promise<NextResponse<HealthResponse>> {
     await Promise.race([
       prisma.$queryRawUnsafe("SELECT 1"),
       new Promise((_resolve, reject) =>
-        setTimeout(() => reject(new Error("Database timeout")), 4000),
+        setTimeout(() => reject(new Error("Database timeout")), 4000)
       ),
     ]);
   } catch {
