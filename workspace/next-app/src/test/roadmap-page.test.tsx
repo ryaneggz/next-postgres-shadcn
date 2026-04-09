@@ -50,8 +50,7 @@ describe("roadmap page", () => {
     const links = screen.getAllByRole("link");
     const githubIssuesLink = links.find(
       (link) =>
-        link.getAttribute("href") ===
-        "https://github.com/ryaneggz/next-postgres-shadcn/issues"
+        link.getAttribute("href") === "https://github.com/ryaneggz/next-postgres-shadcn/issues"
     );
     expect(githubIssuesLink).toBeDefined();
   });
