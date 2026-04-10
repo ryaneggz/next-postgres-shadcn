@@ -12,5 +12,24 @@ else
   SANDBOX_NAME="$(basename "$REPO_ROOT")"
 fi
 
-echo "SANDBOX_NAME=$SANDBOX_NAME" > "$SCRIPT_DIR/.env"
+# Resolve GIT_COMMON_DIR for worktree mounts
+# If .git is a file (worktree), resolve the parent .git directory
+GIT_ENTRY="$REPO_ROOT/.git"
+if [ -f "$GIT_ENTRY" ]; then
+  # Worktree: .git file contains "gitdir: /path/to/.git/worktrees/<name>"
+  GITDIR="$(sed 's/^gitdir: //' "$GIT_ENTRY")"
+  # Make absolute if relative
+  [[ "$GITDIR" != /* ]] && GITDIR="$REPO_ROOT/$GITDIR"
+  # The common dir is two levels up from .git/worktrees/<name>
+  GIT_COMMON_DIR="$(cd "$GITDIR/../.." && pwd)"
+else
+  GIT_COMMON_DIR=""
+fi
+
+{
+  echo "SANDBOX_NAME=$SANDBOX_NAME"
+  [ -n "$GIT_COMMON_DIR" ] && echo "GIT_COMMON_DIR=$GIT_COMMON_DIR"
+} > "$SCRIPT_DIR/.env"
+
 echo "Resolved SANDBOX_NAME=$SANDBOX_NAME"
+[ -n "$GIT_COMMON_DIR" ] && echo "Resolved GIT_COMMON_DIR=$GIT_COMMON_DIR (worktree)"

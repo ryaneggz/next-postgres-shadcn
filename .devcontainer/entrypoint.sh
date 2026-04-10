@@ -12,10 +12,12 @@ if [ -S "$SOCK" ]; then
   fi
 fi
 
-# Fix ownership of mounted .claude auth directory
-if [ -d /home/sandbox/.claude ]; then
-  chown -R sandbox:sandbox /home/sandbox/.claude 2>/dev/null || true
-fi
+# Fix ownership of mounted volumes (created as root by Docker)
+for dir in .claude .cloudflared .config/gh; do
+  if [ -d "/home/sandbox/$dir" ]; then
+    chown -R sandbox:sandbox "/home/sandbox/$dir" 2>/dev/null || true
+  fi
+done
 
 # Generate SSH host keys if missing (needed for sshd to accept connections)
 if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then

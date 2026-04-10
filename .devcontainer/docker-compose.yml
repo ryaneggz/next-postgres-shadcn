@@ -14,7 +14,6 @@ services:
       - claude-auth:/home/sandbox/.claude
       - cloudflared-auth:/home/sandbox/.cloudflared
       - gh-config:/home/sandbox/.config/gh
-      - ssh-keys:/home/sandbox/.ssh
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -33,4 +32,3 @@ volumes:
   claude-auth:
   cloudflared-auth:
   gh-config:
-  ssh-keys:
