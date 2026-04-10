@@ -17,6 +17,9 @@ on:
       - "workspace/projects/next-app/postcss.config.*"
       - "workspace/projects/next-app/vitest.config.*"
       - "workspace/projects/next-app/playwright.config.*"
+      - "workspace/projects/next-app/.prettierignore"
+      - "workspace/projects/next-app/.gitignore"
+      - "workspace/projects/next-app/.eslintrc*"
       - ".github/workflows/ci.yml"
 
 permissions:
