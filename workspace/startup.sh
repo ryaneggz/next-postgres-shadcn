@@ -62,6 +62,7 @@ fi
 # ─── 4. Prisma generate + migrate ───────────────────────────────────
 if [ -f prisma/schema.prisma ]; then
   log "Running prisma generate..."
+  rm -rf src/generated/prisma
   if ! npx prisma generate 2>&1; then
     die "prisma generate failed"
   fi

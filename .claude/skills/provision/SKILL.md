@@ -39,15 +39,24 @@ Present a checklist to the user **before proceeding**:
 
 ```
 Available compose overlays:
-  [x] docker-compose.postgres.yml    — PostgreSQL 16 + devnet
-  [x] docker-compose.cloudflared.yml — Cloudflare tunnel env vars
-  [x] docker-compose.docker.yml      — Docker socket mount (DinD)
+  [x] docker-compose.postgres.yml      — PostgreSQL 16 + devnet
+  [x] docker-compose.cloudflared.yml   — Cloudflare tunnel env vars
+  [x] docker-compose.docker.yml        — Docker socket mount (DinD)
+  [x] docker-compose.git.yml           — Git worktree mount (if worktree detected)
   [ ] (any new overlays found)
 
 Enable/disable any overlays?
 ```
 
+**SSH key strategy** (mutually exclusive — exactly one must be enabled):
+```
+SSH keys for git authentication:
+  ( ) docker-compose.ssh.yml          — Mount host ~/.ssh read-only (no GitHub setup needed)
+  ( ) docker-compose.ssh-generate.yml — Generate new keypair in a persistent volume (must add to GitHub)
+```
+
 If the user changes selections, update `.openharness/config.json` accordingly.
+Ensure only one SSH overlay is enabled — if the user picks `ssh.yml`, remove `ssh-generate.yml` and vice versa.
 
 ### 2c. Build compose file list
 

@@ -1,38 +1,25 @@
-# Plan: Mount Docker Socket + Prompt for Overlays on Provision
+# Plan: Fix broken public URL
 
 ## Context
-The Docker socket isn't mounted because `docker-compose.docker.yml` is missing from `.openharness/config.json`. The provision skill should also prompt the user about which overlays to enable so this doesn't happen silently.
+The public URL (`next-postgres-shadcn.ruska.dev`) is down because `startup.sh` died at prisma generate (stale `src/generated/prisma` dir) and never reached the cloudflared tunnel step. The tunnel uses a hardcoded `TUNNEL_TOKEN` in `workspace/startup.sh:87` — no config file or `cloudflared tunnel login` needed.
 
-## Changes
+## Steps
 
-### 1. Add docker overlay to config
-**File:** `.openharness/config.json`
+1. Start cloudflared inside the container using the token from startup.sh:
+   ```bash
+   docker exec -u sandbox next-postgres-shadcn bash -c '
+     TUNNEL_TOKEN="eyJhIjoiNTg3NWE2MzJhYTk1NTI3YzE4ZTlmMWYxNTNkY2MyYTYiLCJzIjoicTIwR1Q3cGM5OFUvL1dEL2x2a0ZJUlY4Ynk0cTNtb0hhNDVTRjczeGxOMD0iLCJ0IjoiZWJlNzBkN2MtNDBkNi00NTY3LWI1YWUtYzIzNTc0NTRjMWM4In0=";
+     nohup cloudflared tunnel --url http://localhost:3000 run --token "$TUNNEL_TOKEN" > /tmp/cloudflared.log 2>&1 &
+   '
+   ```
 
-Add `".devcontainer/docker-compose.docker.yml"` to `composeOverrides` array.
+2. Re-run test:setup to confirm 8/8 pass.
 
-### 2. Recreate sandbox to pick up the socket mount
-```bash
-bash .devcontainer/init-env.sh
-docker compose --env-file .devcontainer/.env \
-  -f .devcontainer/docker-compose.yml \
-  -f .devcontainer/docker-compose.postgres.yml \
-  -f .devcontainer/docker-compose.cloudflared.yml \
-  -f .devcontainer/docker-compose.docker.yml \
-  up -d
-```
-
-### 3. Update provision skill to prompt for overlays
-**File:** `.claude/skills/provision/SKILL.md`
-
-Before detecting overlays, add a step that:
-- Lists all available `docker-compose.*.yml` files in `.devcontainer/`
-- Shows which are currently enabled in `config.json`
-- Asks the user if they want to enable/disable any before proceeding
-- Updates `config.json` accordingly
-
-### 4. Save feedback memory
-Record that the user expects overlay selection prompting during provision.
+## Root cause fix
+Also fix startup.sh so prisma generate doesn't fail on a non-empty `src/generated/prisma` directory — clear it before generating:
+- **File:** `workspace/startup.sh:63-65`
+- Add `rm -rf src/generated/prisma` before `npx prisma generate`
 
 ## Verification
-- `docker exec next-postgres-shadcn docker ps` works inside the container
-- Provision skill includes overlay prompt step
+- `curl -sf https://next-postgres-shadcn.ruska.dev` returns 200
+- `npm run test:setup` passes 8/8
