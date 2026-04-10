@@ -26,6 +26,7 @@
 | Claude Code | `claude` |
 | Codex | `codex` |
 | Pi Agent | `pi` |
+| Mom | `mom (@mariozechner/pi-mom)` |
 
 ## Services
 
@@ -35,6 +36,19 @@
 | Next.js Dev Server | `localhost` | 3000 | -- |
 | Prisma Studio | `localhost` | 5555 | -- |
 | Cloudflared Tunnel | `next-postgres-shadcn.ruska.dev` | 443 | -- |
+| Mom (Slack bot) | tmux session `mom` | -- | MOM_SLACK_APP_TOKEN, MOM_SLACK_BOT_TOKEN |
+
+## Mom (Slack Bot)
+
+- **Process**: `mom --sandbox=host ~/harness/workspace/.mom` (tmux session `mom`)
+- **Attach**: `tmux attach -t mom`
+- **Working dir**: `workspace/.mom/`
+- **Memory**: `.mom/MEMORY.md` (symlinked from `workspace/MEMORY.md`)
+- **Skills**: `.mom/skills/ -> .claude/skills/` (shared across claude/codex/pi/mom)
+- **Events**: `.mom/events/` (file-based event scheduling)
+- **Logs**: `/tmp/mom.log` + per-channel `.mom/<channel-id>/log.jsonl`
+- **Auth**: `~/.pi/mom/auth.json -> ~/.pi/agent/auth.json`
+- **Env**: `MOM_SLACK_APP_TOKEN`, `MOM_SLACK_BOT_TOKEN` (via compose overlay)
 
 ## Cloudflared Tunnel
 

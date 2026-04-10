@@ -26,3 +26,11 @@ workspace/.ralph/.claude/
 **/.next
 **/.ralph/archives/
 **/src/generated/
+
+# Mom runtime data (channel logs, context, attachments — keep MEMORY.md tracked)
+workspace/.mom/*/
+workspace/.mom/events/
+workspace/.mom/settings.json
+
+# Pi project config (generated symlinks)
+workspace/.pi/
