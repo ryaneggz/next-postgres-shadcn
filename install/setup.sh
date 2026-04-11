@@ -159,8 +159,16 @@ ok "uv $(uv --version) installed"
 
 # ─── 8. agent-browser + Chromium (optional) ──────────────────────
 if [[ "$INSTALL_BROWSER" == true ]]; then
+  banner "Installing Chromium system dependencies"
+  apt-get install -y --no-install-recommends \
+    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+    libpango-1.0-0 libcairo2 libasound2 libxshmfence1 libx11-xcb1 \
+    fonts-liberation xdg-utils
+  ok "Chromium system dependencies installed"
+
   banner "Installing agent-browser and Chromium"
-  npm install -g agent-browser
+  npm install -g agent-browser@0.8.5
   agent-browser install --with-deps
   ok "agent-browser + Chromium installed"
 else

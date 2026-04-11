@@ -12,6 +12,19 @@ argument-hint: "[--rebuild]"
 
 Provision (or rebuild) the next-postgres-shadcn sandbox. One skill, zero manual steps.
 
+## 0. Environment Guard
+
+```bash
+if [ -f /.dockerenv ]; then
+  echo "ERROR: /provision is a host-only skill. You are inside the container."
+  echo "Use /repair to diagnose and fix issues from inside the container."
+  exit 1
+fi
+```
+
+If inside the container, **stop immediately** and tell the user to use `/repair` instead.
+Do not proceed with any other steps.
+
 ## 1. Resolve Parameters
 
 Arguments received: `$ARGUMENTS`
@@ -195,7 +208,7 @@ Sandbox 'next-postgres-shadcn' is ready!
     openharness heartbeat status next-postgres-shadcn # check heartbeat logs
 
   Validate:
-    /diagnose               # diagnose and fix issues anytime
+    /repair                 # repair and verify the stack anytime
 
   Manage:
     /provision --rebuild    # full teardown + rebuild

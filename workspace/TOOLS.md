@@ -44,10 +44,10 @@
 - **Attach**: `tmux attach -t mom`
 - **Working dir**: `workspace/.mom/`
 - **Memory**: `.mom/MEMORY.md` (symlinked from `workspace/MEMORY.md`)
-- **Skills**: `.mom/skills/ -> .claude/skills/` (shared across claude/codex/pi/mom)
+- **Skills**: `.mom/skills/ -> .claude/skills/` (shared across claude/codex/openharness/mom)
 - **Events**: `.mom/events/` (file-based event scheduling)
 - **Logs**: `/tmp/mom.log` + per-channel `.mom/<channel-id>/log.jsonl`
-- **Auth**: `~/.pi/mom/auth.json -> ~/.pi/agent/auth.json`
+- **Auth**: `~/.openharness/mom/auth.json -> ~/.openharness/agent/auth.json`
 - **Env**: `MOM_SLACK_APP_TOKEN`, `MOM_SLACK_BOT_TOKEN` (via compose overlay)
 
 ## Cloudflared Tunnel

@@ -75,29 +75,30 @@ if [ -f prisma/schema.prisma ]; then
   fi
 fi
 
-# ─── 5. Unified agent config (pi + mom symlinks) ──────────────────
+# ─── 5. Unified agent config (openharness + mom symlinks) ─────────
 WORKSPACE_DIR="$HOME/harness/workspace"
 MOM_DIR="$WORKSPACE_DIR/.mom"
 
-# Pi project config — share skills/agents/rules with claude
-mkdir -p "$WORKSPACE_DIR/.pi"
-[ ! -L "$WORKSPACE_DIR/.pi/skills" ] && ln -sf ../.claude/skills "$WORKSPACE_DIR/.pi/skills"
-[ ! -L "$WORKSPACE_DIR/.pi/agents" ] && ln -sf ../.claude/agents "$WORKSPACE_DIR/.pi/agents"
-[ ! -L "$WORKSPACE_DIR/.pi/rules" ]  && ln -sf ../.claude/rules  "$WORKSPACE_DIR/.pi/rules"
+# OpenHarness project config — share agents/rules with claude
+# Note: workspace/.openharness -> ../.openharness (root), so symlink
+# targets are relative to the root .openharness/ directory
+OH_DIR="$HOME/harness/.openharness"
+[ ! -L "$OH_DIR/agents" ] && ln -sf ../workspace/.claude/agents "$OH_DIR/agents"
+[ ! -L "$OH_DIR/rules" ]  && ln -sf ../workspace/.claude/rules  "$OH_DIR/rules"
 
-# Pi settings — tell pi-coding-agent to also load from .claude/skills
-if [ ! -f "$WORKSPACE_DIR/.pi/settings.json" ]; then
-  echo '{"skills":["./.claude/skills/"]}' > "$WORKSPACE_DIR/.pi/settings.json"
+# OpenHarness settings — load from .claude/skills
+if [ ! -f "$OH_DIR/settings.json" ]; then
+  echo '{"skills":["./.claude/skills/"]}' > "$OH_DIR/settings.json"
 fi
 
 # Mom working directory
 mkdir -p "$MOM_DIR/events"
 [ ! -L "$MOM_DIR/skills" ] && ln -sf ../.claude/skills "$MOM_DIR/skills"
 
-# Auth sharing — mom uses pi's credentials
-mkdir -p "$HOME/.pi/mom"
-if [ ! -L "$HOME/.pi/mom/auth.json" ] && [ -f "$HOME/.pi/agent/auth.json" ]; then
-  ln -sf "$HOME/.pi/agent/auth.json" "$HOME/.pi/mom/auth.json"
+# Auth sharing — mom uses openharness credentials
+mkdir -p "$HOME/.openharness/mom"
+if [ ! -L "$HOME/.openharness/mom/auth.json" ] && [ -f "$HOME/.openharness/agent/auth.json" ]; then
+  ln -sf "$HOME/.openharness/agent/auth.json" "$HOME/.openharness/mom/auth.json"
 fi
 
 # Memory unification — move real MEMORY.md to .mom/, symlink back

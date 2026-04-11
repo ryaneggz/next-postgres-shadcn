@@ -12,7 +12,7 @@
 8. Never skip pre-commit hooks (`--no-verify`)
 9. Memory protocol runs at the end of every task (see below)
 10. `CLAUDE.md` and `AGENTS.md` are symlinked; `MEMORY.md` symlinks to `.mom/MEMORY.md` — editing either updates both
-11. Run `/diagnose` at the end of every session to verify the stack is healthy (dev server, tunnel, DB, public URL)
+11. Run `/repair` at the end of every session to verify the stack is healthy (dev server, tunnel, DB, public URL)
 
 ## File Responsibilities
 
@@ -69,7 +69,7 @@ Available as slash commands (`.claude/skills/`):
 | Skill | When to Use |
 |-------|-------------|
 | `/ci-status` | After `git push` — poll CI, report pass/fail, fetch failure logs |
-| `/diagnose` | Diagnose and fix the full stack — run tests, auto-remediate, re-verify (`npm run test:setup`) |
+| `/repair` | Repair the full stack — detect environment, run tests, auto-remediate, re-verify (`npm run test:setup`) |
 | `/release` | Cut a CalVer release — branch `release/YYYY.M.D-N`, tag, push, CI builds + pushes to GHCR |
 | `/destroy` | Tear down sandbox — stop containers, remove volumes, optionally prune image |
 | `/delegate` | Decompose plan into tasks, spawn parallel worker agents in waves |
