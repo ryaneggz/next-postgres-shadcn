@@ -40,15 +40,29 @@
 
 ## Mom (Slack Bot)
 
-- **Process**: `mom --sandbox=host ~/harness/workspace/.mom` (tmux session `mom`)
+- **Source**: `ryaneggz/pi-mono` fork (custom: env var model config, thread replies)
+- **Process**: `mom --sandbox=host ~/harness/workspace/.mom` (tmux session `mom`, auto-restart)
 - **Attach**: `tmux attach -t mom`
+- **Model**: `openai-codex/gpt-5.4` (configurable via `MOM_PROVIDER` + `MOM_MODEL` env vars)
 - **Working dir**: `workspace/.mom/`
 - **Memory**: `.mom/MEMORY.md` (symlinked from `workspace/MEMORY.md`)
 - **Skills**: `.mom/skills/ -> .claude/skills/` (shared across claude/codex/openharness/mom)
 - **Events**: `.mom/events/` (file-based event scheduling)
 - **Logs**: `/tmp/mom.log` + per-channel `.mom/<channel-id>/log.jsonl`
-- **Auth**: `~/.openharness/mom/auth.json -> ~/.openharness/agent/auth.json`
-- **Env**: `MOM_SLACK_APP_TOKEN`, `MOM_SLACK_BOT_TOKEN` (via compose overlay)
+- **Auth**: `~/.pi/mom/auth.json -> ~/.pi/agent/auth.json` (populated via `pi /login`)
+- **Env**: `MOM_SLACK_APP_TOKEN`, `MOM_SLACK_BOT_TOKEN`, `MOM_PROVIDER`, `MOM_MODEL` (via compose overlay)
+- **Threads**: All replies are posted in threads under the user's message
+
+### Mom Recovery
+
+| Scenario | Recovery |
+|----------|----------|
+| Container restart | Mom auto-restarts via tmux loop — no action needed |
+| Container rebuild | Run `pi --provider openai-codex` then `/login`, restart container |
+| Slack tokens lost | Regenerate at api.slack.com (Install App + App-Level Tokens). Update `.env.mom` |
+| OAuth token expired | Run `pi --provider openai-codex` then `/login` inside the REPL |
+| Fork broken | Fix fork or revert Dockerfile to `@mariozechner/pi-mom` |
+| Full teardown (`down -v`) | All volumes lost. Re-run `pi /login`, re-create `.env.mom` from `.env.mom.example` |
 
 ## Cloudflared Tunnel
 

@@ -47,7 +47,13 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | env INSTALLER_NO_MODIFY_PATH=1 
  && cp /root/.local/bin/uvx /usr/local/bin/uvx
 
 # ─── Agent CLIs ─────────────────────────────────────────────────────
-RUN npm install -g @anthropic-ai/claude-code @openai/codex @mariozechner/pi-coding-agent @mariozechner/pi-mom
+# Mom Slack bot — installed from ryaneggz/pi-mono fork
+# Custom: MOM_PROVIDER/MOM_MODEL env var config, thread replies, no usage summary
+# To update: push changes to the fork, then rebuild this image
+RUN npm install -g @anthropic-ai/claude-code @openai/codex @mariozechner/pi-coding-agent \
+ && git clone --depth 1 https://github.com/ryaneggz/pi-mono.git /tmp/pi-mono \
+ && cd /tmp/pi-mono/packages/mom && npm pack && npm install -g *.tgz \
+ && rm -rf /tmp/pi-mono
 
 # ─── Agent Browser + Chromium ──────────────────────────────────────
 RUN npm install -g agent-browser@0.8.5 && agent-browser install --with-deps

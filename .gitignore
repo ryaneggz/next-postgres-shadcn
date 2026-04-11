@@ -1,4 +1,5 @@
 **/.env*
+!.devcontainer/.env.mom.example
 .worktrees/*
 !.worktrees/.gitkeep
 

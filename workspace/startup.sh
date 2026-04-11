@@ -95,10 +95,10 @@ fi
 mkdir -p "$MOM_DIR/events"
 [ ! -L "$MOM_DIR/skills" ] && ln -sf ../.claude/skills "$MOM_DIR/skills"
 
-# Auth sharing — mom uses openharness credentials
-mkdir -p "$HOME/.openharness/mom"
-if [ ! -L "$HOME/.openharness/mom/auth.json" ] && [ -f "$HOME/.openharness/agent/auth.json" ]; then
-  ln -sf "$HOME/.openharness/agent/auth.json" "$HOME/.openharness/mom/auth.json"
+# Auth sharing — mom reads from ~/.pi/mom/auth.json
+mkdir -p "$HOME/.pi/mom"
+if [ ! -L "$HOME/.pi/mom/auth.json" ] && [ -f "$HOME/.pi/agent/auth.json" ]; then
+  ln -sf "$HOME/.pi/agent/auth.json" "$HOME/.pi/mom/auth.json"
 fi
 
 # Memory unification — move real MEMORY.md to .mom/, symlink back
@@ -119,8 +119,8 @@ if [ -n "${MOM_SLACK_APP_TOKEN:-}" ] && [ -n "${MOM_SLACK_BOT_TOKEN:-}" ]; then
     if ! tmux has-session -t mom 2>/dev/null; then
       log "Starting mom in tmux session..."
       tmux new-session -d -s mom \
-        "mom --sandbox=host $MOM_DIR 2>&1 | tee /tmp/mom.log"
-      log "Mom started (tmux session: mom)"
+        "while true; do mom --sandbox=host $MOM_DIR 2>&1 | tee -a /tmp/mom.log; echo '[mom] exited, restarting in 5s...' | tee -a /tmp/mom.log; sleep 5; truncate -s 0 /tmp/mom.log 2>/dev/null; done"
+      log "Mom started (tmux session: mom, auto-restart enabled)"
     else
       log "Mom already running — skipping"
     fi

@@ -1,5 +1,15 @@
 services:
   sandbox:
+    env_file:
+      - path: .env.mom
+        required: false
     environment:
       - MOM_SLACK_APP_TOKEN=${MOM_SLACK_APP_TOKEN:-}
       - MOM_SLACK_BOT_TOKEN=${MOM_SLACK_BOT_TOKEN:-}
+      - MOM_PROVIDER=${MOM_PROVIDER:-openai-codex}
+      - MOM_MODEL=${MOM_MODEL:-gpt-5.4}
+    volumes:
+      - pi-auth:/home/sandbox/.pi
+
+volumes:
+  pi-auth:
