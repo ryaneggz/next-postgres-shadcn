@@ -114,6 +114,16 @@ fi
 log "Agent config symlinks established"
 
 # ─── 6. Start Mom Slack bot ───────────────────────────────────────
+# Fallback: source .env.mom if tokens not already in environment
+ENV_MOM="$HOME/harness/.devcontainer/.env.mom"
+if [ -z "${MOM_SLACK_APP_TOKEN:-}" ] && [ -f "$ENV_MOM" ]; then
+  log "Slack tokens missing from env — sourcing $ENV_MOM"
+  set -a
+  # shellcheck disable=SC1090
+  source <(grep -v '^#' "$ENV_MOM" | grep -v '^$')
+  set +a
+fi
+
 if [ -n "${MOM_SLACK_APP_TOKEN:-}" ] && [ -n "${MOM_SLACK_BOT_TOKEN:-}" ]; then
   if command -v mom &>/dev/null; then
     if ! tmux has-session -t mom 2>/dev/null; then
