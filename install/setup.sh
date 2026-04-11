@@ -25,6 +25,7 @@ INSTALL_BROWSER="${INSTALL_BROWSER:-false}"
 INSTALL_CLAUDE_CODE="${INSTALL_CLAUDE_CODE:-true}"
 INSTALL_CODEX="${INSTALL_CODEX:-true}"
 INSTALL_PI_AGENT="${INSTALL_PI_AGENT:-true}"
+INSTALL_MOM="${INSTALL_MOM:-false}"
 INSTALL_AGENTMAIL="${INSTALL_AGENTMAIL:-false}"
 INSTALL_CLOUDFLARED="${INSTALL_CLOUDFLARED:-false}"
 SSH_PUBKEY="${SSH_PUBKEY:-}"
@@ -57,6 +58,10 @@ if [[ "$NON_INTERACTIVE" == false ]]; then
   printf "\n  Install Pi Coding Agent? (https://shittycodingagent.ai)\n"
   read -rp "  Install Pi Agent? [Y/n]: " answer
   [[ "$answer" =~ ^[Nn]$ ]] && INSTALL_PI_AGENT=false
+
+  printf "\n  Install Mom Slack Bot? (https://github.com/badlogic/pi-mono/tree/main/packages/mom)\n"
+  read -rp "  Install Mom? [y/N]: " answer
+  [[ "$answer" =~ ^[Yy]$ ]] && INSTALL_MOM=true
 
   printf "\n  Install AgentMail CLI? (https://docs.agentmail.to/integrations/cli)\n"
   read -rp "  Install AgentMail? [y/N]: " answer
@@ -154,8 +159,16 @@ ok "uv $(uv --version) installed"
 
 # ─── 8. agent-browser + Chromium (optional) ──────────────────────
 if [[ "$INSTALL_BROWSER" == true ]]; then
+  banner "Installing Chromium system dependencies"
+  apt-get install -y --no-install-recommends \
+    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+    libpango-1.0-0 libcairo2 libasound2 libxshmfence1 libx11-xcb1 \
+    fonts-liberation xdg-utils
+  ok "Chromium system dependencies installed"
+
   banner "Installing agent-browser and Chromium"
-  npm install -g agent-browser
+  npm install -g agent-browser@0.8.5
   agent-browser install --with-deps
   ok "agent-browser + Chromium installed"
 else
@@ -199,6 +212,19 @@ elif [[ "$INSTALL_PI_AGENT" == true ]]; then
   ok "Pi Coding Agent installed"
 else
   banner "Skipping Pi Agent"
+  ok "Skipped"
+fi
+
+# ─── 11b. Mom Slack Bot (optional) ───────────────────────────────────
+if command -v mom &>/dev/null; then
+  banner "Mom already installed"
+  ok "mom $(mom --version 2>/dev/null || echo 'present') — skipped"
+elif [[ "$INSTALL_MOM" == true ]]; then
+  banner "Installing Mom (Slack Bot)"
+  npm install -g @mariozechner/pi-mom
+  ok "Mom installed"
+else
+  banner "Skipping Mom"
   ok "Skipped"
 fi
 
@@ -310,6 +336,9 @@ if [[ "$INSTALL_CODEX" == true ]]; then
 fi
 if [[ "$INSTALL_PI_AGENT" == true ]]; then
   printf "  pi       : %s\n" "$(pi --version 2>/dev/null || echo 'installed')"
+fi
+if [[ "$INSTALL_MOM" == true ]]; then
+  printf "  mom    : %s\n" "$(mom --version 2>/dev/null || echo 'installed')"
 fi
 if [[ "$INSTALL_AGENTMAIL" == true ]]; then
   printf "  agentmail: %s\n" "$(agentmail --version 2>/dev/null || echo 'installed')"

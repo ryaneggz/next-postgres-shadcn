@@ -71,7 +71,7 @@ workspace/
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
 | `/delegate` | Decomposing a plan into parallel tasks | Decompose plan into tasks, spawn parallel worker agents in waves |
-| `/diagnose` | After crashes, failed builds, broken stack | Diagnose and fix the full stack (container, deps, Prisma, DB, dev server, tunnel) |
+| `/repair` | After crashes, failed builds, broken stack | Repair the full stack — environment-aware (container or host), auto-remediate, re-verify |
 | `/release` | Cutting a new version | Cut a CalVer release (branch, tag, push, CI builds + pushes to GHCR) |
 | `/destroy` | Tearing down the sandbox | Tear down sandbox (stop containers, remove volumes) |
 | `/provision` | Provisioning or rebuilding the sandbox | Build image, start services, validate with test:setup |

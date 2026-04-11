@@ -11,8 +11,8 @@
 7. Never push to `main` or `development` directly — use feature branches and PRs
 8. Never skip pre-commit hooks (`--no-verify`)
 9. Memory protocol runs at the end of every task (see below)
-10. `CLAUDE.md` and `AGENTS.md` are symlinked — editing either updates both
-11. Run `/diagnose` at the end of every session to verify the stack is healthy (dev server, tunnel, DB, public URL)
+10. `CLAUDE.md` and `AGENTS.md` are symlinked; `MEMORY.md` symlinks to `.mom/MEMORY.md` — editing either updates both
+11. Run `/repair` at the end of every session to verify the stack is healthy (dev server, tunnel, DB, public URL)
 
 ## File Responsibilities
 
@@ -24,7 +24,7 @@
 | AGENTS.md | Operating procedures, decision rules | Environment details, tool reference |
 | TOOLS.md | Environment, tools, services, workflows | Personality, procedures |
 | HEARTBEAT.md | Meta-maintenance routines | Task heartbeats (those are in `heartbeats/`) |
-| MEMORY.md | Learned decisions, lessons, triage history | Static stack info (that's in IDENTITY.md) |
+| MEMORY.md | Learned decisions, lessons, triage history (symlinked to .mom/MEMORY.md) | Static stack info (that's in IDENTITY.md) |
 
 ## Decision Rules
 
@@ -69,7 +69,7 @@ Available as slash commands (`.claude/skills/`):
 | Skill | When to Use |
 |-------|-------------|
 | `/ci-status` | After `git push` — poll CI, report pass/fail, fetch failure logs |
-| `/diagnose` | Diagnose and fix the full stack — run tests, auto-remediate, re-verify (`npm run test:setup`) |
+| `/repair` | Repair the full stack — detect environment, run tests, auto-remediate, re-verify (`npm run test:setup`) |
 | `/release` | Cut a CalVer release — branch `release/YYYY.M.D-N`, tag, push, CI builds + pushes to GHCR |
 | `/destroy` | Tear down sandbox — stop containers, remove volumes, optionally prune image |
 | `/delegate` | Decompose plan into tasks, spawn parallel worker agents in waves |
@@ -109,3 +109,9 @@ Parallel planning agents in `.claude/agents/`:
 | Expert: Agent Systems | "What agent capability accelerates building this?" |
 | Strategic Critic | Challenges council's draft roadmap — signal, feasibility, phase rigor |
 | Strategic Council | Synthesizes 5 expert proposals into signal-validated roadmap (opus) |
+
+## Mom (Slack Interface)
+
+Mom runs as a tmux session (`tmux attach -t mom`) providing Slack-based access to this workspace.
+Shares the same skills (`.claude/skills/`), memory (`.mom/MEMORY.md`), and agent config as claude/codex/pi.
+Auto-starts on container boot when `MOM_SLACK_APP_TOKEN` and `MOM_SLACK_BOT_TOKEN` are set.

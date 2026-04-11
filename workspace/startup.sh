@@ -75,7 +75,63 @@ if [ -f prisma/schema.prisma ]; then
   fi
 fi
 
-# ─── 5. Start Next.js dev server ────────────────────────────────────
+# ─── 5. Unified agent config (openharness + mom symlinks) ─────────
+WORKSPACE_DIR="$HOME/harness/workspace"
+MOM_DIR="$WORKSPACE_DIR/.mom"
+
+# OpenHarness project config — share agents/rules with claude
+# Note: workspace/.openharness -> ../.openharness (root), so symlink
+# targets are relative to the root .openharness/ directory
+OH_DIR="$HOME/harness/.openharness"
+[ ! -L "$OH_DIR/agents" ] && ln -sf ../workspace/.claude/agents "$OH_DIR/agents"
+[ ! -L "$OH_DIR/rules" ]  && ln -sf ../workspace/.claude/rules  "$OH_DIR/rules"
+
+# OpenHarness settings — load from .claude/skills
+if [ ! -f "$OH_DIR/settings.json" ]; then
+  echo '{"skills":["./.claude/skills/"]}' > "$OH_DIR/settings.json"
+fi
+
+# Mom working directory
+mkdir -p "$MOM_DIR/events"
+[ ! -L "$MOM_DIR/skills" ] && ln -sf ../.claude/skills "$MOM_DIR/skills"
+
+# Auth sharing — mom uses openharness credentials
+mkdir -p "$HOME/.openharness/mom"
+if [ ! -L "$HOME/.openharness/mom/auth.json" ] && [ -f "$HOME/.openharness/agent/auth.json" ]; then
+  ln -sf "$HOME/.openharness/agent/auth.json" "$HOME/.openharness/mom/auth.json"
+fi
+
+# Memory unification — move real MEMORY.md to .mom/, symlink back
+if [ -f "$WORKSPACE_DIR/MEMORY.md" ] && [ ! -L "$WORKSPACE_DIR/MEMORY.md" ]; then
+  log "Migrating MEMORY.md to .mom/ (one-time)"
+  cp "$WORKSPACE_DIR/MEMORY.md" "$MOM_DIR/MEMORY.md"
+  rm "$WORKSPACE_DIR/MEMORY.md"
+  ln -sf .mom/MEMORY.md "$WORKSPACE_DIR/MEMORY.md"
+elif [ ! -e "$MOM_DIR/MEMORY.md" ]; then
+  touch "$MOM_DIR/MEMORY.md"
+  [ ! -L "$WORKSPACE_DIR/MEMORY.md" ] && ln -sf .mom/MEMORY.md "$WORKSPACE_DIR/MEMORY.md"
+fi
+log "Agent config symlinks established"
+
+# ─── 6. Start Mom Slack bot ───────────────────────────────────────
+if [ -n "${MOM_SLACK_APP_TOKEN:-}" ] && [ -n "${MOM_SLACK_BOT_TOKEN:-}" ]; then
+  if command -v mom &>/dev/null; then
+    if ! tmux has-session -t mom 2>/dev/null; then
+      log "Starting mom in tmux session..."
+      tmux new-session -d -s mom \
+        "mom --sandbox=host $MOM_DIR 2>&1 | tee /tmp/mom.log"
+      log "Mom started (tmux session: mom)"
+    else
+      log "Mom already running — skipping"
+    fi
+  else
+    log "WARNING: mom not installed — skipping"
+  fi
+else
+  log "Mom: no Slack tokens — skipping (set MOM_SLACK_APP_TOKEN + MOM_SLACK_BOT_TOKEN)"
+fi
+
+# ─── 7. Start Next.js dev server ────────────────────────────────────
 if ! is_running "next dev"; then
   log "Starting Next.js dev server..."
   nohup npm run dev > /tmp/next-dev.log 2>&1 &
@@ -84,7 +140,7 @@ else
   log "Next.js already running — skipping"
 fi
 
-# ─── 6. Start cloudflared tunnel ────────────────────────────────────
+# ─── 8. Start cloudflared tunnel ────────────────────────────────────
 TUNNEL_TOKEN="***REMOVED***"
 if command -v cloudflared &>/dev/null; then
   if ! is_running "cloudflared tunnel"; then
@@ -98,7 +154,7 @@ else
   log "WARNING: cloudflared not installed — skipping tunnel"
 fi
 
-# ─── 7. Health verification ─────────────────────────────────────────
+# ─── 9. Health verification ─────────────────────────────────────────
 log "Verifying dev server health..."
 retries=0
 until curl -sf http://localhost:3000 > /dev/null 2>&1; do

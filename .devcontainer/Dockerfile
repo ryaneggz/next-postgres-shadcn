@@ -47,10 +47,10 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | env INSTALLER_NO_MODIFY_PATH=1 
  && cp /root/.local/bin/uvx /usr/local/bin/uvx
 
 # ─── Agent CLIs ─────────────────────────────────────────────────────
-RUN npm install -g @anthropic-ai/claude-code @openai/codex @mariozechner/pi-coding-agent
+RUN npm install -g @anthropic-ai/claude-code @openai/codex @mariozechner/pi-coding-agent @mariozechner/pi-mom
 
 # ─── Agent Browser + Chromium ──────────────────────────────────────
-RUN npm install -g agent-browser && agent-browser install --with-deps
+RUN npm install -g agent-browser@0.8.5 && agent-browser install --with-deps
 
 # ─── Sandbox user ──────────────────────────────────────────────────
 RUN useradd -m -s /bin/bash sandbox \
@@ -62,7 +62,8 @@ RUN useradd -m -s /bin/bash sandbox \
 # Shell aliases for agent CLIs
 RUN echo "alias claude='claude --dangerously-skip-permissions'" >> /home/sandbox/.bashrc \
  && echo "alias codex='codex --full-auto'" >> /home/sandbox/.bashrc \
- && echo "alias pi='pi'" >> /home/sandbox/.bashrc
+ && echo "alias pi='pi'" >> /home/sandbox/.bashrc \
+ && echo "alias mom='mom --sandbox=host ~/harness/workspace/.mom'" >> /home/sandbox/.bashrc
 
 # Git safe.directory for bind-mounted project
 RUN su - sandbox -c "git config --global --add safe.directory /home/sandbox/harness"

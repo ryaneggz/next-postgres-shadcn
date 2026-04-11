@@ -199,7 +199,7 @@ Host-level skills run from the orchestrator (outside the container):
 |-------|-------------|
 | `/provision` | Build + start the sandbox with all compose overlays, wait for startup, validate with `test:setup` |
 | `/provision --rebuild` | Full teardown (volumes included) then provision from scratch |
-| `/diagnose` | Run 8 health checks (env, deps, Prisma, DB, dev server, tunnel, public URL), auto-fix failures |
+| `/repair` | Run 8 health checks (env, deps, Prisma, DB, dev server, tunnel, public URL), auto-fix failures. Works from host or inside container. |
 | `/delegate` | Decompose plan into tasks, spawn parallel worker agents in waves |
 | `/release` | Cut a CalVer release — create `release/YYYY.M.D-N` branch, tag, push to trigger CI + GHCR build |
 | `/release --dry-run` | Pre-flight checks only — show version and test results without releasing |
